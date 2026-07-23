@@ -1,0 +1,147 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+import {
+  Customer,
+  CustomerSegment,
+  CustomerStatus,
+} from "../types/customer";
+
+const CUSTOMERS_STORAGE_KEY = "jmk_mobile_customers";
+
+const SAMPLE_CUSTOMERS: Customer[] = [
+  {
+    id: "customer-1",
+    name: "Rahul Sharma",
+    mobile: "9876543210",
+    alternateMobile: "",
+    email: "rahul@example.com",
+    segment: "Assets",
+    status: "Active",
+    city: "Dewas",
+    address: "Tilak Nagar, Dewas",
+    occupation: "Business",
+    source: "Website",
+    assignedTo: "Suresh Vishwakarma",
+    notes: "Ready possession row house requirement.",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: "customer-2",
+    name: "Pooja Verma",
+    mobile: "9826012345",
+    alternateMobile: "",
+    email: "",
+    segment: "Finance",
+    status: "Prospect",
+    city: "Indore",
+    address: "",
+    occupation: "Salaried",
+    source: "Referral",
+    assignedTo: "Admin",
+    notes: "Home loan documents pending.",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+];
+
+function createId(): string {
+  return `customer-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function normalizeCustomer(value: Partial<Customer>): Customer {
+  const now = new Date().toISOString();
+
+  return {
+    id: value.id || createId(),
+    name: String(value.name || "").trim(),
+    mobile: String(value.mobile || "").replace(/\D/g, ""),
+    alternateMobile: String(value.alternateMobile || "").replace(/\D/g, ""),
+    email: String(value.email || "").trim().toLowerCase(),
+    segment: (value.segment as CustomerSegment) || "Assets",
+    status: (value.status as CustomerStatus) || "Prospect",
+    city: String(value.city || "").trim(),
+    address: String(value.address || "").trim(),
+    occupation: String(value.occupation || "").trim(),
+    source: String(value.source || "").trim() || "Mobile App",
+    assignedTo: String(value.assignedTo || "").trim() || "Admin",
+    notes: String(value.notes || "").trim(),
+    createdAt: value.createdAt || now,
+    updatedAt: now,
+  };
+}
+
+async function saveCustomers(customers: Customer[]): Promise<void> {
+  await AsyncStorage.setItem(CUSTOMERS_STORAGE_KEY, JSON.stringify(customers));
+}
+
+export async function getCustomers(): Promise<Customer[]> {
+  try {
+    const storedValue = await AsyncStorage.getItem(CUSTOMERS_STORAGE_KEY);
+
+    if (!storedValue) {
+      await saveCustomers(SAMPLE_CUSTOMERS);
+      return SAMPLE_CUSTOMERS;
+    }
+
+    const parsedValue: unknown = JSON.parse(storedValue);
+
+    if (!Array.isArray(parsedValue)) {
+      await saveCustomers(SAMPLE_CUSTOMERS);
+      return SAMPLE_CUSTOMERS;
+    }
+
+    return parsedValue.map((item) => normalizeCustomer(item as Partial<Customer>));
+  } catch (error) {
+    console.error("Unable to read customers:", error);
+    return SAMPLE_CUSTOMERS;
+  }
+}
+
+export async function getCustomerById(id: string): Promise<Customer | null> {
+  const customers = await getCustomers();
+  return customers.find((customer) => customer.id === id) || null;
+}
+
+export async function addCustomer(value: Partial<Customer>): Promise<Customer> {
+  const customers = await getCustomers();
+  const customer = normalizeCustomer(value);
+  await saveCustomers([customer, ...customers]);
+  return customer;
+}
+
+export async function updateCustomer(
+  id: string,
+  updates: Partial<Customer>
+): Promise<Customer | null> {
+  const customers = await getCustomers();
+  let updatedCustomer: Customer | null = null;
+
+  const nextCustomers = customers.map((customer) => {
+    if (customer.id !== id) return customer;
+
+    updatedCustomer = normalizeCustomer({
+      ...customer,
+      ...updates,
+      id: customer.id,
+      createdAt: customer.createdAt,
+    });
+
+    return updatedCustomer;
+  });
+
+  if (!updatedCustomer) return null;
+
+  await saveCustomers(nextCustomers);
+  return updatedCustomer;
+}
+
+export async function deleteCustomer(id: string): Promise<boolean> {
+  const customers = await getCustomers();
+  const nextCustomers = customers.filter((customer) => customer.id !== id);
+
+  if (nextCustomers.length === customers.length) return false;
+
+  await saveCustomers(nextCustomers);
+  return true;
+}

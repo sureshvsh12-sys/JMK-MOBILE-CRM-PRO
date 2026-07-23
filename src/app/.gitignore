@@ -1,0 +1,11 @@
+node_modules/
+.expo/
+dist/
+web-build/
+.env
+.env.*
+*.log
+*.apk
+*.aab
+.DS_Store
+Thumbs.db

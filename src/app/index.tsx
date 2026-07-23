@@ -1,98 +1,139 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  useEffect,
+} from "react";
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import {
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
+import {
+  useRouter,
+} from "expo-router";
+
+import type {
+  Href,
+} from "expo-router";
+
+import BrandLogo from "../components/BrandLogo";
+
+import {
+  COLORS,
+  SPACING,
+} from "../constants/theme";
+
+const LOGIN_ROUTE = "/login" satisfies Href;
+
+export default function SplashScreen() {
+  const router = useRouter();
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      router.replace(LOGIN_ROUTE);
+    }, 2200);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [router]);
+
   return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
+    <View style={styles.container}>
+      <BrandLogo
+        size={142}
+        showTagline={false}
+      />
 
-export default function HomeScreen() {
-  return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
+      <Text style={styles.enterprise}>
+        CRM PRO Enterprise
+      </Text>
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
+      <View style={styles.segmentContainer}>
+        <Text style={styles.finance}>
+          JMK Financial Servicess
+        </Text>
 
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
+        <Text style={styles.assets}>
+          JMK Assets
+        </Text>
 
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+        <Text style={styles.solar}>
+          JMK Solar Solutions
+        </Text>
+      </View>
+
+      <View style={styles.footer}>
+        <Text style={styles.tagline}>
+          Trust • Growth • Future
+        </Text>
+
+        <Text style={styles.loading}>
+          Secure CRM Loading...
+        </Text>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: SPACING.xl,
+    backgroundColor: COLORS.background,
   },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
+
+  enterprise: {
+    marginTop: 14,
+    color: COLORS.primary,
+    fontSize: 18,
+    fontWeight: "800",
+    letterSpacing: 0.5,
   },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
+
+  segmentContainer: {
+    marginTop: 35,
+    alignItems: "center",
+    gap: 10,
   },
-  title: {
-    textAlign: 'center',
+
+  finance: {
+    color: COLORS.finance,
+    fontSize: 15,
+    fontWeight: "700",
   },
-  code: {
-    textTransform: 'uppercase',
+
+  assets: {
+    color: COLORS.assets,
+    fontSize: 15,
+    fontWeight: "700",
   },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+
+  solar: {
+    color: COLORS.solar,
+    fontSize: 15,
+    fontWeight: "700",
+  },
+
+  footer: {
+    position: "absolute",
+    right: 0,
+    bottom: 40,
+    left: 0,
+    alignItems: "center",
+  },
+
+  tagline: {
+    color: COLORS.textMuted,
+    fontSize: 14,
+    fontWeight: "700",
+  },
+
+  loading: {
+    marginTop: 9,
+    color: "#475569",
+    fontSize: 12,
   },
 });

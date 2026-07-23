@@ -1,0 +1,36 @@
+﻿src/app/_layout.tsx(10,3): error TS2724: '"../constants/theme"' has no exported member named 'COLORS'. Did you mean 'Colors'?
+src/app/index.tsx(18,3): error TS2724: '"../constants/theme"' has no exported member named 'COLORS'. Did you mean 'Colors'?
+src/app/index.tsx(19,3): error TS2724: '"../constants/theme"' has no exported member named 'SPACING'. Did you mean 'Spacing'?
+src/components/AppHeader.tsx(9,5): error TS2724: '"../constants/theme"' has no exported member named 'COLORS'. Did you mean 'Colors'?
+src/components/AppHeader.tsx(10,5): error TS2305: Module '"../constants/theme"' has no exported member 'RADIUS'.
+src/components/AppHeader.tsx(11,5): error TS2724: '"../constants/theme"' has no exported member named 'SPACING'. Did you mean 'Spacing'?
+src/components/BottomNavigation.tsx(9,5): error TS2724: '"../constants/theme"' has no exported member named 'COLORS'. Did you mean 'Colors'?
+src/components/BottomNavigation.tsx(10,5): error TS2305: Module '"../constants/theme"' has no exported member 'RADIUS'.
+src/components/BottomNavigation.tsx(11,5): error TS2724: '"../constants/theme"' has no exported member named 'SPACING'. Did you mean 'Spacing'?
+src/components/BrandLogo.tsx(8,5): error TS2724: '"../constants/theme"' has no exported member named 'COLORS'. Did you mean 'Colors'?
+src/components/BrandLogo.tsx(9,5): error TS2305: Module '"../constants/theme"' has no exported member 'SHADOW'.
+src/components/DashboardStatCard.tsx(8,5): error TS2724: '"../constants/theme"' has no exported member named 'COLORS'. Did you mean 'Colors'?
+src/components/DashboardStatCard.tsx(9,5): error TS2305: Module '"../constants/theme"' has no exported member 'RADIUS'.
+src/components/DashboardStatCard.tsx(10,5): error TS2305: Module '"../constants/theme"' has no exported member 'SHADOW'.
+src/components/DashboardStatCard.tsx(11,5): error TS2724: '"../constants/theme"' has no exported member named 'SPACING'. Did you mean 'Spacing'?
+src/components/LeadListItem.tsx(10,5): error TS2724: '"../constants/theme"' has no exported member named 'COLORS'. Did you mean 'Colors'?
+src/components/LeadListItem.tsx(11,5): error TS2305: Module '"../constants/theme"' has no exported member 'RADIUS'.
+src/components/LeadListItem.tsx(12,5): error TS2724: '"../constants/theme"' has no exported member named 'SPACING'. Did you mean 'Spacing'?
+src/components/PrimaryButton.tsx(9,5): error TS2724: '"../constants/theme"' has no exported member named 'COLORS'. Did you mean 'Colors'?
+src/components/PrimaryButton.tsx(10,5): error TS2305: Module '"../constants/theme"' has no exported member 'RADIUS'.
+src/components/PrimaryButton.tsx(11,5): error TS2305: Module '"../constants/theme"' has no exported member 'SHADOW'.
+src/components/QuickActionCard.tsx(9,5): error TS2724: '"../constants/theme"' has no exported member named 'COLORS'. Did you mean 'Colors'?
+src/components/QuickActionCard.tsx(10,5): error TS2305: Module '"../constants/theme"' has no exported member 'RADIUS'.
+src/components/QuickActionCard.tsx(11,5): error TS2724: '"../constants/theme"' has no exported member named 'SPACING'. Did you mean 'Spacing'?
+src/screens/auth/LoginScreen.tsx(24,5): error TS2724: '"../../constants/theme"' has no exported member named 'COLORS'. Did you mean 'Colors'?
+src/screens/auth/LoginScreen.tsx(25,5): error TS2305: Module '"../../constants/theme"' has no exported member 'RADIUS'.
+src/screens/auth/LoginScreen.tsx(26,5): error TS2724: '"../../constants/theme"' has no exported member named 'SPACING'. Did you mean 'Spacing'?
+src/screens/dashboard/DashboardScreen.tsx(21,5): error TS2724: '"../../constants/theme"' has no exported member named 'COLORS'. Did you mean 'Colors'?
+src/screens/dashboard/DashboardScreen.tsx(22,5): error TS2305: Module '"../../constants/theme"' has no exported member 'RADIUS'.
+src/screens/dashboard/DashboardScreen.tsx(23,5): error TS2724: '"../../constants/theme"' has no exported member named 'SPACING'. Did you mean 'Spacing'?
+src/screens/leads/LeadFormScreen.tsx(27,5): error TS2724: '"../../constants/theme"' has no exported member named 'COLORS'. Did you mean 'Colors'?
+src/screens/leads/LeadFormScreen.tsx(28,5): error TS2305: Module '"../../constants/theme"' has no exported member 'RADIUS'.
+src/screens/leads/LeadFormScreen.tsx(29,5): error TS2724: '"../../constants/theme"' has no exported member named 'SPACING'. Did you mean 'Spacing'?
+src/screens/leads/LeadListScreen.tsx(29,5): error TS2724: '"../../constants/theme"' has no exported member named 'COLORS'. Did you mean 'Colors'?
+src/screens/leads/LeadListScreen.tsx(30,5): error TS2305: Module '"../../constants/theme"' has no exported member 'RADIUS'.
+src/screens/leads/LeadListScreen.tsx(31,5): error TS2724: '"../../constants/theme"' has no exported member named 'SPACING'. Did you mean 'Spacing'?
