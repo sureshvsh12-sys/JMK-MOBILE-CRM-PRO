@@ -7,13 +7,14 @@ import {
   RefreshControl,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import AppHeader from "../../components/AppHeader";
+import EmptyState from "../../components/common/EmptyState";
+import SearchField from "../../components/common/SearchField";
 import BottomNavigation, {
   BottomNavigationKey,
 } from "../../components/BottomNavigation";
@@ -112,13 +113,13 @@ export default function CustomerListScreen() {
           </Pressable>
         </View>
 
-        <TextInput
-          value={search}
-          onChangeText={setSearch}
-          placeholder="Search name, mobile, city or segment"
-          placeholderTextColor={COLORS.textMuted}
-          style={styles.searchInput}
-        />
+        <View style={styles.searchWrap}>
+          <SearchField
+            value={search}
+            onChangeText={setSearch}
+            placeholder="Search name, mobile, city or segment"
+          />
+        </View>
 
         <FlatList
           data={filteredCustomers}
@@ -135,7 +136,15 @@ export default function CustomerListScreen() {
               }}
             />
           }
-          ListEmptyComponent={<Text style={styles.emptyText}>No customers found.</Text>}
+          ListEmptyComponent={
+            <EmptyState
+              icon="◉"
+              title="No Customers Found"
+              message="Search clear karein ya pehla customer record add karein."
+              actionLabel="Add Customer"
+              onActionPress={() => router.push("/customer-form" as never)}
+            />
+          }
           renderItem={({ item }) => (
             <Pressable
               style={styles.card}
@@ -195,7 +204,7 @@ const styles = StyleSheet.create({
   subtitle: { color: COLORS.textMuted, marginTop: 3 },
   addButton: { backgroundColor: COLORS.primary, paddingHorizontal: 16, paddingVertical: 11, borderRadius: RADIUS.md },
   addButtonText: { color: COLORS.white, fontWeight: "900" },
-  searchInput: { marginTop: SPACING.lg, backgroundColor: COLORS.surface, borderColor: COLORS.border, borderWidth: 1, borderRadius: RADIUS.md, color: COLORS.text, paddingHorizontal: 16, minHeight: 50 },
+  searchWrap: { marginTop: SPACING.lg },
   listContent: { paddingTop: SPACING.lg, paddingBottom: SPACING.xl },
   card: { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.lg, padding: SPACING.lg, marginBottom: SPACING.md },
   cardHeader: { flexDirection: "row", alignItems: "center" },
@@ -211,5 +220,4 @@ const styles = StyleSheet.create({
   actionText: { color: COLORS.text, fontSize: 11, fontWeight: "800" },
   deleteButton: { paddingHorizontal: 12, justifyContent: "center" },
   deleteText: { color: COLORS.danger, fontSize: 11, fontWeight: "900" },
-  emptyText: { color: COLORS.textMuted, textAlign: "center", marginTop: 60 },
 });

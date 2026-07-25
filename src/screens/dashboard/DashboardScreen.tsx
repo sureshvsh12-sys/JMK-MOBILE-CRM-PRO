@@ -170,7 +170,7 @@ export default function DashboardScreen() {
           </View>
 
           <View style={styles.welcomeLogo}>
-            <BrandLogo background="dark" showGroupName showTagline width={108} />
+            <BrandLogo background="dark" showGroupName showTagline compact width={96} />
           </View>
         </View>
 
@@ -256,11 +256,11 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
   scrollView: { flex: 1 },
   scrollContent: { padding: SPACING.lg, paddingBottom: SPACING.xxl },
-  welcomeCard: { minHeight: 155, flexDirection: "row", alignItems: "center", padding: SPACING.xl, borderRadius: RADIUS.xl, backgroundColor: "#172554", borderWidth: 1, borderColor: "#1D4ED8", overflow: "hidden" },
-  welcomeContent: { flex: 1, paddingRight: SPACING.lg },
-  welcomeLogo: { minWidth: 132, alignItems: "center", justifyContent: "center" },
+  welcomeCard: { minHeight: 148, flexDirection: "row", alignItems: "center", padding: SPACING.lg, borderRadius: RADIUS.xl, backgroundColor: "#10233E", borderWidth: 1, borderColor: "#254A74", overflow: "hidden" },
+  welcomeContent: { flex: 1, minWidth: 0, paddingRight: SPACING.md },
+  welcomeLogo: { width: 112, alignItems: "center", justifyContent: "center" },
   welcomeLabel: { color: "#93C5FD", fontSize: 12, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.8 },
-  userName: { marginTop: 5, color: COLORS.white, fontSize: 22, fontWeight: "900" },
+  userName: { marginTop: 5, color: COLORS.white, fontSize: 23, fontWeight: "900" },
   welcomeDescription: { marginTop: 8, color: "#CBD5E1", fontSize: 12, lineHeight: 19 },
   sectionHeader: { marginTop: SPACING.xl, marginBottom: SPACING.md, flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between" },
   sectionTitle: { color: COLORS.white, fontSize: 18, fontWeight: "900" },

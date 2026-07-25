@@ -3,6 +3,7 @@ import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { COLORS, RADIUS, SPACING } from "../constants/theme";
+import NotificationBell from "./NotificationBell";
 
 const HEADER_LOGO = require("../../assets/images/jmk-logo-dark.png");
 const ROOT_PATHS = new Set(["/dashboard", "/leads", "/customers", "/followups"]);
@@ -88,21 +89,10 @@ export default function AppHeader({
         </View>
 
         <View style={styles.actions}>
-          <Pressable
-            accessibilityLabel={safeNotificationCount ? `${safeNotificationCount} unread notifications` : "Notifications"}
-            accessibilityRole="button"
-            hitSlop={8}
+          <NotificationBell
+            count={safeNotificationCount}
             onPress={onNotificationPress}
-            style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
-          >
-            <Text style={styles.bellIcon}>♢</Text>
-            <View style={styles.bellDot} />
-            {safeNotificationCount > 0 ? (
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>{safeNotificationCount > 99 ? "99+" : safeNotificationCount}</Text>
-              </View>
-            ) : null}
-          </Pressable>
+          />
 
           <Pressable
             accessibilityLabel={`Open ${userName} profile`}
@@ -150,15 +140,6 @@ const styles = StyleSheet.create({
   groupText: { marginLeft: 6, color: COLORS.white, fontSize: 16, fontWeight: "900", letterSpacing: 1.5 },
   segment: { marginTop: 2, color: COLORS.textMuted, fontSize: 10.5, fontWeight: "700", letterSpacing: 0.15 },
   actions: { flexDirection: "row", alignItems: "center", gap: 7 },
-  bellIcon: { color: COLORS.white, fontSize: 22, fontWeight: "900", transform: [{ rotate: "45deg" }] },
-  bellDot: { position: "absolute", top: 10, width: 5, height: 5, borderRadius: 3, backgroundColor: COLORS.white },
-  badge: {
-    position: "absolute", top: -4, right: -4, minWidth: 18, height: 18,
-    paddingHorizontal: 4, alignItems: "center", justifyContent: "center",
-    borderRadius: RADIUS.round, backgroundColor: COLORS.primary,
-    borderWidth: 1.5, borderColor: "#07182A",
-  },
-  badgeText: { color: COLORS.white, fontSize: 9, fontWeight: "900" },
   profileButton: {
     width: 42, height: 42, alignItems: "center", justifyContent: "center",
     borderRadius: RADIUS.round, backgroundColor: COLORS.primary,

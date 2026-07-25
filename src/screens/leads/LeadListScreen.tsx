@@ -24,6 +24,8 @@ import BottomNavigation, {
     BottomNavigationKey,
 } from "../../components/BottomNavigation";
 import LeadListItem from "../../components/LeadListItem";
+import EmptyState from "../../components/common/EmptyState";
+import SearchField from "../../components/common/SearchField";
 
 import {
     COLORS,
@@ -217,19 +219,11 @@ export default function LeadListScreen() {
               </Pressable>
             </View>
 
-            <View style={styles.searchBox}>
-              <Text style={styles.searchIcon}>
-                🔎
-              </Text>
-
-              <TextInput
+            <View style={styles.searchWrap}>
+              <SearchField
                 value={search}
                 onChangeText={setSearch}
                 placeholder="Name, mobile, property, location..."
-                placeholderTextColor={
-                  COLORS.textMuted
-                }
-                style={styles.searchInput}
               />
             </View>
 
@@ -309,20 +303,13 @@ export default function LeadListScreen() {
           </View>
         }
         ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyIcon}>
-              🎯
-            </Text>
-
-            <Text style={styles.emptyTitle}>
-              No Leads Found
-            </Text>
-
-            <Text style={styles.emptyText}>
-              Search filter clear karein ya
-              nayi lead add karein.
-            </Text>
-          </View>
+          <EmptyState
+            icon="◎"
+            title="No Leads Found"
+            message="Search ya filter clear karein, ya nayi lead create karein."
+            actionLabel="Add New Lead"
+            onActionPress={() => router.push("/lead-form")}
+          />
         }
         contentContainerStyle={
           styles.listContent
@@ -379,6 +366,10 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontSize: 12,
     fontWeight: "900",
+  },
+
+  searchWrap: {
+    marginTop: SPACING.xl,
   },
 
   searchBox: {

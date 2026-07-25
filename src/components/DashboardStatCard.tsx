@@ -1,15 +1,6 @@
-import {
-    StyleSheet,
-    Text,
-    View,
-} from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 
-import {
-    COLORS,
-    RADIUS,
-    SHADOW,
-    SPACING,
-} from "../constants/theme";
+import { COLORS, RADIUS, SHADOW, SPACING } from "../constants/theme";
 
 type DashboardStatCardProps = {
   title: string;
@@ -28,39 +19,35 @@ export default function DashboardStatCard({
 }: DashboardStatCardProps) {
   return (
     <View style={styles.card}>
-      <View
-        style={[
-          styles.iconContainer,
-          {
-            backgroundColor: `${accentColor}22`,
-            borderColor: `${accentColor}55`,
-          },
-        ]}
-      >
-        <Text style={styles.icon}>{icon}</Text>
+      <View style={styles.topRow}>
+        <View
+          style={[
+            styles.iconContainer,
+            {
+              backgroundColor: `${accentColor}22`,
+              borderColor: `${accentColor}55`,
+            },
+          ]}
+        >
+          <Text style={styles.icon}>{icon}</Text>
+        </View>
+
+        <View style={[styles.accentDot, { backgroundColor: accentColor }]} />
       </View>
 
-      <Text style={styles.title}>
-        {title}
-      </Text>
+      <Text style={styles.title}>{title}</Text>
 
       <Text
-        style={[
-          styles.value,
-          {
-            color: accentColor,
-          },
-        ]}
         numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.8}
+        style={[styles.value, { color: accentColor }]}
       >
         {value}
       </Text>
 
       {description ? (
-        <Text
-          style={styles.description}
-          numberOfLines={1}
-        >
+        <Text style={styles.description} numberOfLines={1}>
           {description}
         </Text>
       ) : null}
@@ -79,7 +66,11 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
     ...SHADOW,
   },
-
+  topRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
   iconContainer: {
     width: 43,
     height: 43,
@@ -88,27 +79,28 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.md,
     borderWidth: 1,
   },
-
   icon: {
     fontSize: 21,
   },
-
+  accentDot: {
+    width: 7,
+    height: 7,
+    borderRadius: RADIUS.round,
+  },
   title: {
     marginTop: SPACING.md,
     color: COLORS.textMuted,
     fontSize: 12,
     fontWeight: "700",
   },
-
   value: {
     marginTop: 5,
     fontSize: 23,
     fontWeight: "900",
   },
-
   description: {
     marginTop: 5,
-    color: "#64748B",
+    color: "#72859A",
     fontSize: 10,
     fontWeight: "600",
   },

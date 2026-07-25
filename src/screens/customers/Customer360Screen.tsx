@@ -13,6 +13,8 @@ import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import CustomerProfileCard from "../../components/customer/CustomerProfileCard";
+import EmptyState from "../../components/common/EmptyState";
+import ScreenSectionHeader from "../../components/common/ScreenSectionHeader";
 import CustomerTimeline from "../../components/customer/CustomerTimeline";
 import { COLORS, RADIUS, SPACING } from "../../constants/theme";
 import {
@@ -91,9 +93,13 @@ export default function Customer360Screen() {
           <Text style={styles.headerTitle}>Customer 360°</Text>
           <View style={styles.headerSpacer} />
         </View>
-        <View style={styles.center}>
-          <Text style={styles.empty}>Customer record not found.</Text>
-        </View>
+        <EmptyState
+          icon="◉"
+          title="Customer Not Found"
+          message="Customer record available nahi hai. Customers list par wapas jaakar dobara try karein."
+          actionLabel="Back to Customers"
+          onActionPress={() => router.replace("/customers" as never)}
+        />
       </SafeAreaView>
     );
   }
@@ -146,7 +152,7 @@ export default function Customer360Screen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Add Activity Note</Text>
+          <ScreenSectionHeader title="Add Activity Note" subtitle="Meeting, requirement ya follow-up details save karein." />
           <TextInput
             value={note}
             onChangeText={setNote}
@@ -161,7 +167,7 @@ export default function Customer360Screen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Customer Timeline</Text>
+          <ScreenSectionHeader title="Customer Timeline" subtitle={`${activities.length} recorded activities`} />
           <CustomerTimeline activities={activities} />
         </View>
       </ScrollView>
@@ -176,14 +182,11 @@ const styles = StyleSheet.create({
   headerTitle: { color: COLORS.text, fontSize: 18, fontWeight: "900" },
   headerSpacer: { width: 48 },
   content: { padding: SPACING.lg, paddingBottom: 50 },
-  center: { flex: 1, alignItems: "center", justifyContent: "center" },
-  empty: { color: COLORS.textMuted },
   statsRow: { flexDirection: "row", gap: SPACING.sm, marginTop: SPACING.md },
   statCard: { flex: 1, backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.md, padding: SPACING.md, alignItems: "center" },
   statValue: { color: COLORS.text, fontSize: 22, fontWeight: "900" },
   statLabel: { color: COLORS.textMuted, fontSize: 11, marginTop: 3 },
   section: { marginTop: SPACING.xl },
-  sectionTitle: { color: COLORS.text, fontSize: 17, fontWeight: "900", marginBottom: SPACING.md },
   noteInput: { minHeight: 90, color: COLORS.text, backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.md, padding: SPACING.md, textAlignVertical: "top" },
   noteButton: { alignSelf: "flex-end", marginTop: SPACING.sm, backgroundColor: COLORS.primary, borderRadius: RADIUS.md, paddingHorizontal: 18, paddingVertical: 11 },
   noteButtonText: { color: COLORS.white, fontWeight: "900" },
