@@ -24,23 +24,7 @@ export type FollowUpInput = Omit<FollowUp, "id" | "createdAt" | "updatedAt">;
 
 const STORAGE_KEY = "jmk_mobile_followups";
 
-const SAMPLE_FOLLOW_UPS: FollowUp[] = [
-  {
-    id: "followup-1",
-    customerId: "customer-1",
-    customerName: "Rahul Sharma",
-    mobile: "9876543210",
-    subject: "Property site visit",
-    notes: "Station Road commercial property discuss karna hai.",
-    dueAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
-    status: "Pending",
-    priority: "High",
-    mode: "Call",
-    assignedTo: "Suresh Vishwakarma",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-];
+const LEGACY_DEMO_IDS = new Set(["followup-1"]);
 
 function createId(): string {
   return `followup-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -73,12 +57,20 @@ export async function getFollowUps(): Promise<FollowUp[]> {
   try {
     const raw = await AsyncStorage.getItem(STORAGE_KEY);
     if (!raw) {
-      await write(SAMPLE_FOLLOW_UPS);
-      return SAMPLE_FOLLOW_UPS;
+      return [];
     }
     const parsed: unknown = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    return parsed.map((item) => normalize(item as Partial<FollowUp>));
+
+    const followUps = parsed
+      .map((item) => normalize(item as Partial<FollowUp>))
+      .filter((item) => !LEGACY_DEMO_IDS.has(item.id));
+
+    if (followUps.length !== parsed.length) {
+      await write(followUps);
+    }
+
+    return followUps;
   } catch (error) {
     console.error("Unable to read follow-ups:", error);
     return [];

@@ -41,7 +41,15 @@ export default function CustomerListScreen() {
     if (!query) return customers;
 
     return customers.filter((customer) =>
-      [customer.name, customer.mobile, customer.city, customer.segment]
+      [
+        customer.name,
+        customer.mobile,
+        customer.alternateMobile,
+        customer.email,
+        customer.city,
+        customer.segment,
+        customer.status,
+      ]
         .join(" ")
         .toLowerCase()
         .includes(query)
@@ -56,6 +64,23 @@ export default function CustomerListScreen() {
     };
     const route = routes[key];
     if (route) router.replace(route as never);
+  };
+
+
+  const openExternalUrl = async (url: string, errorMessage: string) => {
+    try {
+      const supported = await Linking.canOpenURL(url);
+
+      if (!supported) {
+        Alert.alert("Not Available", errorMessage);
+        return;
+      }
+
+      await Linking.openURL(url);
+    } catch (error) {
+      console.error("Unable to open external URL:", error);
+      Alert.alert("Action Failed", errorMessage);
+    }
   };
 
   const handleDelete = (customer: Customer) => {
@@ -130,13 +155,25 @@ export default function CustomerListScreen() {
               </View>
 
               <View style={styles.actionRow}>
-                <Pressable style={styles.actionButton} onPress={() => Linking.openURL(`tel:${item.mobile}`)}>
+                <Pressable style={styles.actionButton} onPress={(event) => {
+                    event.stopPropagation();
+                    void openExternalUrl(`tel:${item.mobile}`, "Call app open nahi ho saka.");
+                  }}>
                   <Text style={styles.actionText}>📞 Call</Text>
                 </Pressable>
-                <Pressable style={styles.actionButton} onPress={() => Linking.openURL(`https://wa.me/91${item.mobile}`)}>
+                <Pressable style={styles.actionButton} onPress={(event) => {
+                    event.stopPropagation();
+                    void openExternalUrl(
+                      `https://wa.me/91${item.mobile}`,
+                      "WhatsApp open nahi ho saka."
+                    );
+                  }}>
                   <Text style={styles.actionText}>💬 WhatsApp</Text>
                 </Pressable>
-                <Pressable style={styles.deleteButton} onPress={() => handleDelete(item)}>
+                <Pressable style={styles.deleteButton} onPress={(event) => {
+                    event.stopPropagation();
+                    handleDelete(item);
+                  }}>
                   <Text style={styles.deleteText}>Delete</Text>
                 </Pressable>
               </View>

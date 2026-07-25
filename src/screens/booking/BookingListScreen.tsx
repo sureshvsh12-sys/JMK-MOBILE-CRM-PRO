@@ -268,6 +268,19 @@ const styles = StyleSheet.create({
   cardActions: { flexDirection: "row", alignItems: "center", gap: 12 },
   paymentButton: { backgroundColor: COLORS.primary, borderRadius: RADIUS.md, paddingHorizontal: 12, paddingVertical: 8 },
   paymentButtonText: { color: COLORS.white, fontWeight: "900", fontSize: 11 },
+  installmentButton: {
+    backgroundColor: COLORS.surfaceLight,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.md,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  installmentButtonText: {
+    color: COLORS.info,
+    fontWeight: "900",
+    fontSize: 11,
+  },
   deleteText: { color: COLORS.danger, fontSize: 11, fontWeight: "900" },
   emptyText: { color: COLORS.textMuted, textAlign: "center", marginTop: 60 },
 });

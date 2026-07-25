@@ -8,42 +8,7 @@ import {
 
 const CUSTOMERS_STORAGE_KEY = "jmk_mobile_customers";
 
-const SAMPLE_CUSTOMERS: Customer[] = [
-  {
-    id: "customer-1",
-    name: "Rahul Sharma",
-    mobile: "9876543210",
-    alternateMobile: "",
-    email: "rahul@example.com",
-    segment: "Assets",
-    status: "Active",
-    city: "Dewas",
-    address: "Tilak Nagar, Dewas",
-    occupation: "Business",
-    source: "Website",
-    assignedTo: "Suresh Vishwakarma",
-    notes: "Ready possession row house requirement.",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: "customer-2",
-    name: "Pooja Verma",
-    mobile: "9826012345",
-    alternateMobile: "",
-    email: "",
-    segment: "Finance",
-    status: "Prospect",
-    city: "Indore",
-    address: "",
-    occupation: "Salaried",
-    source: "Referral",
-    assignedTo: "Admin",
-    notes: "Home loan documents pending.",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-];
+const LEGACY_DEMO_IDS = new Set(["customer-1", "customer-2"]);
 
 function createId(): string {
   return `customer-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -80,21 +45,27 @@ export async function getCustomers(): Promise<Customer[]> {
     const storedValue = await AsyncStorage.getItem(CUSTOMERS_STORAGE_KEY);
 
     if (!storedValue) {
-      await saveCustomers(SAMPLE_CUSTOMERS);
-      return SAMPLE_CUSTOMERS;
+      return [];
     }
 
     const parsedValue: unknown = JSON.parse(storedValue);
 
     if (!Array.isArray(parsedValue)) {
-      await saveCustomers(SAMPLE_CUSTOMERS);
-      return SAMPLE_CUSTOMERS;
+      return [];
     }
 
-    return parsedValue.map((item) => normalizeCustomer(item as Partial<Customer>));
+    const customers = parsedValue
+      .map((item) => normalizeCustomer(item as Partial<Customer>))
+      .filter((customer) => !LEGACY_DEMO_IDS.has(customer.id));
+
+    if (customers.length !== parsedValue.length) {
+      await saveCustomers(customers);
+    }
+
+    return customers;
   } catch (error) {
     console.error("Unable to read customers:", error);
-    return SAMPLE_CUSTOMERS;
+    return [];
   }
 }
 

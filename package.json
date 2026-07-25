@@ -9,7 +9,13 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "reset-project": "node ./scripts/reset-project.js"
+    "reset-project": "node ./scripts/reset-project.js",
+    "typecheck": "tsc --noEmit",
+    "build:apk": "eas build --platform android --profile preview",
+    "build:aab": "eas build --platform android --profile production",
+    "verify:release": "node ./scripts/verify-release.js",
+    "release:apk": "npm run verify:release && eas build --platform android --profile preview",
+    "release:aab": "npm run verify:release && eas build --platform android --profile production"
   },
   "dependencies": {
     "@expo/ui": "~57.0.7",

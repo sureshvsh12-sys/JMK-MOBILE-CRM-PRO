@@ -1,42 +1,55 @@
 {
   "expo": {
-    "name": "JMK-Mobile",
-    "slug": "JMK-Mobile",
+    "name": "JMK CRM PRO",
+    "slug": "jmk-mobile-crm",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "jmkmobile",
-    "userInterfaceStyle": "automatic",
-    "ios": {
-      "icon": "./assets/expo.icon"
-    },
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
     "android": {
+      "package": "com.jmkgroup.crm",
+      "versionCode": 1,
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "backgroundColor": "#05182E",
+        "foregroundImage": "./assets/images/android-icon-foreground.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": true,
+      "permissions": [
+        "INTERNET",
+        "VIBRATE"
+      ],
+      "softwareKeyboardLayoutMode": "pan",
+      "edgeToEdgeEnabled": true
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/icon.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
+          "backgroundColor": "#05182E",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "imageWidth": 260,
+          "resizeMode": "contain"
         }
       ]
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "962c8cda-ef00-4f6b-85a1-2fcff14e288a"
+      }
+    },
+    "description": "JMK CRM PRO Enterprise mobile application for leads, customers, follow-ups, finance, solar, reports and field operations.",
+    "owner": "sureshvsh12-sys"
   }
 }

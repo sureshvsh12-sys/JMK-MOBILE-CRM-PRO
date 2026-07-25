@@ -26,24 +26,7 @@ export interface Booking {
 
 const STORAGE_KEY = "jmk_mobile_bookings";
 
-const SAMPLE_BOOKINGS: Booking[] = [
-  {
-    id: "booking-1",
-    customerName: "Rahul Sharma",
-    customerMobile: "9876543210",
-    propertyName: "JMK Row House 15x50",
-    propertyLocation: "Dewas Bypass",
-    totalAmount: 3200000,
-    tokenAmount: 100000,
-    receivedAmount: 500000,
-    balanceAmount: 2700000,
-    bookingDate: new Date().toISOString().slice(0, 10),
-    status: "Token Received",
-    notes: "Agreement documents pending.",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-];
+const LEGACY_DEMO_IDS = new Set(["booking-1"]);
 
 function createId(): string {
   return `booking-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -86,14 +69,21 @@ export async function getBookings(): Promise<Booking[]> {
   try {
     const stored = await AsyncStorage.getItem(STORAGE_KEY);
     if (!stored) {
-      await saveBookings(SAMPLE_BOOKINGS);
-      return SAMPLE_BOOKINGS;
+      return [];
     }
 
     const parsed: unknown = JSON.parse(stored);
     if (!Array.isArray(parsed)) return [];
 
-    return parsed.map((item) => normalizeBooking(item as Partial<Booking>));
+    const bookings = parsed
+      .map((item) => normalizeBooking(item as Partial<Booking>))
+      .filter((booking) => !LEGACY_DEMO_IDS.has(booking.id));
+
+    if (bookings.length !== parsed.length) {
+      await saveBookings(bookings);
+    }
+
+    return bookings;
   } catch (error) {
     console.error("Unable to read bookings:", error);
     return [];

@@ -1,12 +1,15 @@
+import { useMemo } from "react";
 import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useRouter, type Href } from "expo-router";
 
 import AppHeader from "../../components/AppHeader";
+import BrandLogo from "../../components/BrandLogo";
 import BottomNavigation from "../../components/BottomNavigation";
 import DashboardStatCard from "../../components/DashboardStatCard";
 import HomeQuickActions from "../../components/HomeQuickActions";
 import QuickActionCard from "../../components/QuickActionCard";
 import { COLORS, RADIUS, SPACING } from "../../constants/theme";
+import { useDashboardStats } from "../../hooks/useDashboardStats";
 
 type DashboardStat = {
   title: string;
@@ -23,15 +26,6 @@ type BusinessSegment = {
   accentColor: string;
   route: Href;
 };
-
-const DASHBOARD_STATS: readonly DashboardStat[] = [
-  { title: "Total Leads", value: 128, icon: "🎯", accentColor: "#3B82F6", description: "18 new this month" },
-  { title: "Customers", value: 86, icon: "👥", accentColor: "#8B5CF6", description: "Active customers" },
-  { title: "Properties", value: 42, icon: "🏢", accentColor: "#DC2626", description: "Available inventory" },
-  { title: "Follow-ups", value: 14, icon: "📅", accentColor: "#F59E0B", description: "Due today" },
-  { title: "Bookings", value: 17, icon: "📝", accentColor: "#10B981", description: "Active bookings" },
-  { title: "Received", value: "₹18.5L", icon: "₹", accentColor: "#22C55E", description: "Booking collection" },
-];
 
 const BUSINESS_SEGMENTS: readonly BusinessSegment[] = [
   {
@@ -57,26 +51,97 @@ const BUSINESS_SEGMENTS: readonly BusinessSegment[] = [
   },
 ];
 
+function formatAmount(value: number): string {
+  const absoluteValue = Math.abs(value);
+  const sign = value < 0 ? "-" : "";
+
+  if (absoluteValue >= 10_000_000) {
+    return `${sign}₹${(absoluteValue / 10_000_000).toFixed(1)}Cr`;
+  }
+
+  if (absoluteValue >= 100_000) {
+    return `${sign}₹${(absoluteValue / 100_000).toFixed(1)}L`;
+  }
+
+  if (absoluteValue >= 1_000) {
+    return `${sign}₹${(absoluteValue / 1_000).toFixed(1)}K`;
+  }
+
+  return `${sign}₹${Math.round(absoluteValue)}`;
+}
+
 export default function DashboardScreen() {
   const router = useRouter();
+  const { data, isLoading, error, refresh } = useDashboardStats();
+
+  const dashboardStats = useMemo<readonly DashboardStat[]>(
+    () => [
+      {
+        title: "Total Leads",
+        value: data.totalLeads,
+        icon: "🎯",
+        accentColor: "#3B82F6",
+        description: `${data.newLeadsThisMonth} new this month`,
+      },
+      {
+        title: "Customers",
+        value: data.customers,
+        icon: "👥",
+        accentColor: "#8B5CF6",
+        description: "Saved customer records",
+      },
+      {
+        title: "Follow-ups",
+        value: data.dueToday,
+        icon: "📅",
+        accentColor: "#F59E0B",
+        description: "Due today",
+      },
+      {
+        title: "Bookings",
+        value: data.activeBookings,
+        icon: "📝",
+        accentColor: "#10B981",
+        description: "Active bookings",
+      },
+      {
+        title: "Received",
+        value: formatAmount(data.bookingReceived),
+        icon: "₹",
+        accentColor: "#22C55E",
+        description: "Booking collection",
+      },
+      {
+        title: "Net Balance",
+        value: formatAmount(data.financeBalance),
+        icon: "💼",
+        accentColor: data.financeBalance < 0 ? COLORS.danger : COLORS.finance,
+        description: "Finance income minus expense",
+      },
+      {
+        title: "Solar Projects",
+        value: data.solarProjects,
+        icon: "☀️",
+        accentColor: COLORS.solar,
+        description: "Active solar enquiries",
+      },
+    ],
+    [data]
+  );
 
   function openRoute(route: Href) {
     router.push(route);
   }
 
   function handleLogout() {
-    Alert.alert(
-      "Logout",
-      "Kya aap JMK CRM se logout karna chahte hain?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Logout",
-          style: "destructive",
-          onPress: () => router.replace("/login"),
-        },
-      ]
-    );
+    Alert.alert("Logout", "Kya aap JMK CRM se logout karna chahte hain?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Logout",
+        style: "destructive",
+        onPress: () => router.replace("/login"),
+      },
+    ]);
   }
 
   return (
@@ -84,7 +149,7 @@ export default function DashboardScreen() {
       <AppHeader
         userName="Suresh Vishwakarma"
         segment="CRM PRO Enterprise"
-        notificationCount={4}
+        notificationCount={data.unreadNotifications}
         onMenuPress={() => openRoute("/settings")}
         onNotificationPress={() => openRoute("/notifications")}
         onProfilePress={() => openRoute("/settings")}
@@ -104,26 +169,31 @@ export default function DashboardScreen() {
             </Text>
           </View>
 
-          <View style={styles.logoCircle}>
-            <Text style={styles.logoText}>JMK</Text>
+          <View style={styles.welcomeLogo}>
+            <BrandLogo background="dark" showGroupName showTagline width={108} />
           </View>
         </View>
 
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Enterprise Overview</Text>
-          <Text style={styles.sectionSubtitle}>Live CRM summary</Text>
+          <Text style={styles.sectionSubtitle}>
+            {isLoading ? "Refreshing..." : "Live CRM summary"}
+          </Text>
         </View>
 
+        {error ? (
+          <QuickActionCard
+            title="Dashboard Refresh"
+            subtitle={error}
+            icon="↻"
+            accentColor={COLORS.danger}
+            onPress={() => void refresh()}
+          />
+        ) : null}
+
         <View style={styles.statsGrid}>
-          {DASHBOARD_STATS.map((item) => (
-            <DashboardStatCard
-              key={item.title}
-              title={item.title}
-              value={item.value}
-              icon={item.icon}
-              accentColor={item.accentColor}
-              description={item.description}
-            />
+          {dashboardStats.map((item) => (
+            <DashboardStatCard key={item.title} {...item} />
           ))}
         </View>
 
@@ -133,41 +203,16 @@ export default function DashboardScreen() {
         </View>
 
         <View style={styles.quickActions}>
-          <QuickActionCard
-            title="Add New Lead"
-            subtitle="Create property, finance or solar lead"
-            icon="➕"
-            accentColor="#3B82F6"
-            onPress={() => openRoute("/lead-form")}
-          />
-          <QuickActionCard
-            title="Today Follow-ups"
-            subtitle="View calls and meetings due today"
-            icon="📅"
-            accentColor="#F59E0B"
-            onPress={() => openRoute("/followups")}
-          />
-          <QuickActionCard
-            title="Create Booking"
-            subtitle="Start a new property booking"
-            icon="📝"
-            accentColor="#10B981"
-            onPress={() => openRoute("/booking-form")}
-          />
-          <QuickActionCard
-            title="Customer Search"
-            subtitle="Open complete customer records"
-            icon="🔎"
-            accentColor="#8B5CF6"
-            onPress={() => openRoute("/search")}
-          />
+          <QuickActionCard title="Add New Lead" subtitle="Create property, finance or solar lead" icon="➕" accentColor="#3B82F6" onPress={() => openRoute("/lead-form")} />
+          <QuickActionCard title="Today Follow-ups" subtitle="View calls and meetings due today" icon="📅" accentColor="#F59E0B" onPress={() => openRoute("/followups")} />
+          <QuickActionCard title="Create Booking" subtitle="Start a new property booking" icon="📝" accentColor="#10B981" onPress={() => openRoute("/booking-form")} />
+          <QuickActionCard title="Customer Search" subtitle="Open complete customer records" icon="🔎" accentColor="#8B5CF6" onPress={() => openRoute("/search")} />
         </View>
 
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>More Modules</Text>
           <Text style={styles.sectionSubtitle}>Enterprise tools</Text>
         </View>
-
         <HomeQuickActions />
 
         <View style={styles.sectionHeader}>
@@ -177,43 +222,28 @@ export default function DashboardScreen() {
 
         <View style={styles.segmentList}>
           {BUSINESS_SEGMENTS.map((segment) => (
-            <QuickActionCard
-              key={segment.title}
-              title={segment.title}
-              subtitle={segment.subtitle}
-              icon={segment.icon}
-              accentColor={segment.accentColor}
-              onPress={() => openRoute(segment.route)}
-            />
+            <QuickActionCard key={segment.title} title={segment.title} subtitle={segment.subtitle} icon={segment.icon} accentColor={segment.accentColor} onPress={() => openRoute(segment.route)} />
           ))}
         </View>
 
-        <View style={styles.alertCard}>
-          <View style={styles.alertIcon}>
-            <Text style={styles.alertEmoji}>⚠️</Text>
+        {data.dueToday > 0 ? (
+          <View style={styles.alertCard}>
+            <View style={styles.alertIcon}><Text style={styles.alertEmoji}>⚠️</Text></View>
+            <View style={styles.alertContent}>
+              <Text style={styles.alertTitle}>Today&apos;s Attention</Text>
+              <Text style={styles.alertText}>
+                {data.dueToday} pending follow-up{data.dueToday === 1 ? "" : "s"} aaj due hain.
+              </Text>
+            </View>
           </View>
-          <View style={styles.alertContent}>
-            <Text style={styles.alertTitle}>Today&apos;s Attention</Text>
-            <Text style={styles.alertText}>
-              14 follow-ups pending, 3 booking installments overdue aur 4 new leads unassigned hain.
-            </Text>
-          </View>
-        </View>
+        ) : null}
 
-        <QuickActionCard
-          title="Logout"
-          subtitle="Securely exit from JMK CRM"
-          icon="🚪"
-          accentColor={COLORS.danger}
-          onPress={handleLogout}
-        />
+        <QuickActionCard title="Logout" subtitle="Securely exit from JMK CRM" icon="🚪" accentColor={COLORS.danger} onPress={handleLogout} />
 
         <View style={styles.footer}>
           <Text style={styles.footerBrand}>JMK GROUP</Text>
           <Text style={styles.footerTagline}>Trust • Growth • Future</Text>
-          <Text style={styles.footerDeveloper}>
-            Developed By Suresh Vishwakarma, Founder, JMK Group
-          </Text>
+          <Text style={styles.footerDeveloper}>Developed By Suresh Vishwakarma, Founder, JMK Group</Text>
         </View>
       </ScrollView>
 
@@ -226,23 +256,12 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
   scrollView: { flex: 1 },
   scrollContent: { padding: SPACING.lg, paddingBottom: SPACING.xxl },
-  welcomeCard: {
-    minHeight: 155,
-    flexDirection: "row",
-    alignItems: "center",
-    padding: SPACING.xl,
-    borderRadius: RADIUS.xl,
-    backgroundColor: "#172554",
-    borderWidth: 1,
-    borderColor: "#1D4ED8",
-    overflow: "hidden",
-  },
-  welcomeContent: { flex: 1, paddingRight: SPACING.md },
+  welcomeCard: { minHeight: 155, flexDirection: "row", alignItems: "center", padding: SPACING.xl, borderRadius: RADIUS.xl, backgroundColor: "#172554", borderWidth: 1, borderColor: "#1D4ED8", overflow: "hidden" },
+  welcomeContent: { flex: 1, paddingRight: SPACING.lg },
+  welcomeLogo: { minWidth: 132, alignItems: "center", justifyContent: "center" },
   welcomeLabel: { color: "#93C5FD", fontSize: 12, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.8 },
   userName: { marginTop: 5, color: COLORS.white, fontSize: 22, fontWeight: "900" },
   welcomeDescription: { marginTop: 8, color: "#CBD5E1", fontSize: 12, lineHeight: 19 },
-  logoCircle: { width: 74, height: 74, alignItems: "center", justifyContent: "center", borderRadius: 37, backgroundColor: COLORS.primary, borderWidth: 4, borderColor: "rgba(255,255,255,0.15)" },
-  logoText: { color: COLORS.white, fontSize: 25, fontWeight: "900" },
   sectionHeader: { marginTop: SPACING.xl, marginBottom: SPACING.md, flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between" },
   sectionTitle: { color: COLORS.white, fontSize: 18, fontWeight: "900" },
   sectionSubtitle: { color: COLORS.textMuted, fontSize: 10, fontWeight: "600" },

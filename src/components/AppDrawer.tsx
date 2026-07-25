@@ -1,135 +1,111 @@
-import { useRouter, type Href } from "expo-router";
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { usePathname, useRouter, type Href } from "expo-router";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import {
-  COLORS,
-  RADIUS,
-  SPACING,
-} from "../constants/theme";
+import { COLORS, RADIUS, SPACING } from "../constants/theme";
+import BrandLogo from "./BrandLogo";
 
-type DrawerItem = {
-  title: string;
-  icon: string;
-  route: Href;
-};
+type DrawerItem = { title: string; icon: string; route: Href; matchPath: string };
 
 const ITEMS: readonly DrawerItem[] = [
-  { title: "Dashboard", icon: "🏠", route: "/dashboard" },
-  { title: "Leads", icon: "🎯", route: "/leads" },
-  { title: "Customers", icon: "👥", route: "/customers" },
-  { title: "Follow-ups", icon: "📅", route: "/followups" },
-  { title: "Bookings", icon: "📝", route: "/bookings" },
-  { title: "Finance", icon: "₹", route: "/finance" },
-  { title: "Solar", icon: "☀️", route: "/solar" },
-  { title: "Employees", icon: "🧑‍💼", route: "/employees" },
-  { title: "Reports", icon: "📊", route: "/reports" },
-  { title: "Search", icon: "🔎", route: "/search" },
-  { title: "Notifications", icon: "🔔", route: "/notifications" },
-  { title: "Settings", icon: "⚙️", route: "/settings" },
+  { title: "Dashboard", icon: "⌂", route: "/dashboard", matchPath: "/dashboard" },
+  { title: "Leads", icon: "◎", route: "/leads", matchPath: "/leads" },
+  { title: "Customers", icon: "♟", route: "/customers", matchPath: "/customers" },
+  { title: "Follow-ups", icon: "✓", route: "/followups", matchPath: "/followups" },
+  { title: "Bookings", icon: "▣", route: "/bookings", matchPath: "/bookings" },
+  { title: "Finance", icon: "₹", route: "/finance", matchPath: "/finance" },
+  { title: "Solar", icon: "☀", route: "/solar", matchPath: "/solar" },
+  { title: "Employees", icon: "◉", route: "/employees", matchPath: "/employees" },
+  { title: "Reports", icon: "▥", route: "/reports", matchPath: "/reports" },
+  { title: "Search", icon: "⌕", route: "/search", matchPath: "/search" },
+  { title: "Notifications", icon: "♢", route: "/notifications", matchPath: "/notifications" },
+  { title: "Settings", icon: "⚙", route: "/settings", matchPath: "/settings" },
 ];
 
-type AppDrawerProps = {
-  onNavigate?: () => void;
-};
+type AppDrawerProps = { onNavigate?: () => void };
+const isRouteActive = (pathname: string, matchPath: string) => pathname === matchPath || pathname.startsWith(`${matchPath}/`);
 
 export default function AppDrawer({ onNavigate }: AppDrawerProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const insets = useSafeAreaInsets();
 
-  function navigateTo(route: Href) {
+  function navigateTo(item: DrawerItem) {
     onNavigate?.();
-    router.push(route);
+    if (!isRouteActive(pathname, item.matchPath)) router.push(item.route);
   }
 
   return (
     <View style={styles.container}>
-      <View style={styles.brandSection}>
-        <Text style={styles.brandName}>JMK GROUP</Text>
-        <Text style={styles.brandTagline}>Trust • Growth • Future</Text>
+      <View style={[styles.brandSection, { paddingTop: Math.max(insets.top, SPACING.lg) }]}>
+        <BrandLogo background="dark" showGroupName={false} showTagline={false} width={88} />
+        <View style={styles.brandCopy}>
+          <Text style={styles.brandName}><Text style={styles.brandJ}>J</Text>MK GROUP</Text>
+          <Text style={styles.brandTagline}>Trust • Growth • Future</Text>
+          <Text style={styles.productName}>CRM PRO Enterprise</Text>
+        </View>
       </View>
 
-      <ScrollView
-        contentContainerStyle={styles.itemsContainer}
-        showsVerticalScrollIndicator={false}
-      >
-        {ITEMS.map((item) => (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`Open ${item.title}`}
-            key={item.title}
-            onPress={() => navigateTo(item.route)}
-            style={({ pressed }) => [
-              styles.item,
-              pressed && styles.pressed,
-            ]}
-          >
-            <Text style={styles.icon}>{item.icon}</Text>
-            <Text style={styles.title}>{item.title}</Text>
-            <Text style={styles.chevron}>›</Text>
-          </Pressable>
-        ))}
+      <ScrollView contentContainerStyle={[styles.itemsContainer, { paddingBottom: Math.max(insets.bottom, SPACING.lg) }]} showsVerticalScrollIndicator={false}>
+        {ITEMS.map((item) => {
+          const active = isRouteActive(pathname, item.matchPath);
+          return (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Open ${item.title}`}
+              accessibilityState={{ selected: active }}
+              key={item.title}
+              onPress={() => navigateTo(item)}
+              style={({ pressed }) => [styles.item, active && styles.activeItem, pressed && styles.pressed]}
+            >
+              <View style={[styles.iconContainer, active && styles.activeIconContainer]}><Text style={[styles.icon, active && styles.activeIcon]}>{item.icon}</Text></View>
+              <Text style={[styles.title, active && styles.activeTitle]}>{item.title}</Text>
+              <Text style={[styles.chevron, active && styles.activeChevron]}>›</Text>
+            </Pressable>
+          );
+        })}
+
+        <View style={styles.footer}>
+          <Text style={styles.footerTitle}>JMK GROUP</Text>
+          <Text style={styles.footerText}>Finance • Assets • Solar</Text>
+          <Text style={styles.footerDeveloper}>Developed By Suresh Vishwakarma</Text>
+        </View>
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
+  container: { flex: 1, backgroundColor: COLORS.background },
   brandSection: {
-    paddingHorizontal: SPACING.xl,
-    paddingTop: SPACING.xxl,
-    paddingBottom: SPACING.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    flexDirection: "row", alignItems: "center", gap: SPACING.lg,
+    paddingHorizontal: SPACING.xl, paddingBottom: SPACING.lg,
+    borderBottomWidth: 1, borderBottomColor: COLORS.border,
+    backgroundColor: "#08182A",
   },
-  brandName: {
-    color: COLORS.text,
-    fontSize: 22,
-    fontWeight: "900",
-    letterSpacing: 0.8,
-  },
-  brandTagline: {
-    marginTop: SPACING.xs,
-    color: COLORS.textMuted,
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  itemsContainer: {
-    padding: SPACING.lg,
-    gap: SPACING.xs,
-  },
+  brandCopy: { flex: 1 },
+  brandName: { color: COLORS.text, fontSize: 20, fontWeight: "900", letterSpacing: 0.7 },
+  brandJ: { color: COLORS.primary },
+  brandTagline: { marginTop: SPACING.xs, color: COLORS.textMuted, fontSize: 11, fontWeight: "600" },
+  productName: { marginTop: 3, color: "#F87171", fontSize: 10, fontWeight: "800" },
+  itemsContainer: { flexGrow: 1, padding: SPACING.lg, gap: 6 },
   item: {
-    minHeight: 50,
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: SPACING.md,
-    borderRadius: RADIUS.md,
-    backgroundColor: COLORS.surface,
+    minHeight: 53, flexDirection: "row", alignItems: "center",
+    paddingHorizontal: SPACING.md, borderRadius: RADIUS.md,
+    backgroundColor: COLORS.surface, borderWidth: 1, borderColor: "transparent",
   },
-  icon: {
-    width: 30,
-    fontSize: 17,
-  },
-  title: {
-    flex: 1,
-    color: COLORS.text,
-    fontSize: 15,
-    fontWeight: "700",
-  },
-  chevron: {
-    color: COLORS.textMuted,
-    fontSize: 24,
-    fontWeight: "400",
-  },
-  pressed: {
-    opacity: 0.7,
-  },
+  activeItem: { backgroundColor: COLORS.primarySoft, borderColor: "rgba(248,113,113,0.3)" },
+  iconContainer: { width: 36, height: 36, alignItems: "center", justifyContent: "center", marginRight: SPACING.sm, borderRadius: RADIUS.sm, backgroundColor: COLORS.surfaceLight },
+  activeIconContainer: { backgroundColor: "rgba(220,38,38,0.18)" },
+  icon: { color: COLORS.textSoft, fontSize: 18, fontWeight: "900" },
+  activeIcon: { color: "#FF6268" },
+  title: { flex: 1, color: COLORS.text, fontSize: 14, fontWeight: "700" },
+  activeTitle: { color: COLORS.white, fontWeight: "900" },
+  chevron: { color: COLORS.textMuted, fontSize: 24, fontWeight: "400" },
+  activeChevron: { color: COLORS.primary },
+  footer: { marginTop: "auto", paddingTop: SPACING.xl, paddingBottom: SPACING.sm, alignItems: "center" },
+  footerTitle: { color: COLORS.text, fontSize: 12, fontWeight: "900", letterSpacing: 0.8 },
+  footerText: { marginTop: 3, color: COLORS.textMuted, fontSize: 10, fontWeight: "600" },
+  footerDeveloper: { marginTop: 5, color: COLORS.textMuted, fontSize: 9, fontWeight: "600" },
+  pressed: { opacity: 0.72, transform: [{ scale: 0.99 }] },
 });

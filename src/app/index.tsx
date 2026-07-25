@@ -1,76 +1,52 @@
-import {
-  useEffect,
-} from "react";
-
-import {
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
-
-import {
-  useRouter,
-} from "expo-router";
-
-import type {
-  Href,
-} from "expo-router";
+import { useEffect } from "react";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { useRouter } from "expo-router";
 
 import BrandLogo from "../components/BrandLogo";
-
-import {
-  COLORS,
-  SPACING,
-} from "../constants/theme";
-
-const LOGIN_ROUTE = "/login" satisfies Href;
+import { COLORS, SPACING } from "../constants/theme";
+import { getAuthSession } from "../storage/authStorage";
+import { initializeDatabase } from "../storage/database";
 
 export default function SplashScreen() {
   const router = useRouter();
 
   useEffect(() => {
+    let active = true;
+
+    async function openApp() {
+      await initializeDatabase();
+      const session = await getAuthSession();
+
+      if (!active) return;
+      router.replace(session ? "/dashboard" : "/login");
+    }
+
     const timer = setTimeout(() => {
-      router.replace(LOGIN_ROUTE);
-    }, 2200);
+      void openApp();
+    }, 900);
 
     return () => {
+      active = false;
       clearTimeout(timer);
     };
   }, [router]);
 
   return (
     <View style={styles.container}>
-      <BrandLogo
-        size={142}
-        showTagline={false}
-      />
+      <BrandLogo width={210} showTagline={false} />
 
-      <Text style={styles.enterprise}>
-        CRM PRO Enterprise
-      </Text>
+      <Text style={styles.enterprise}>CRM PRO Enterprise</Text>
 
       <View style={styles.segmentContainer}>
-        <Text style={styles.finance}>
-          JMK Financial Servicess
-        </Text>
-
-        <Text style={styles.assets}>
-          JMK Assets
-        </Text>
-
-        <Text style={styles.solar}>
-          JMK Solar Solutions
-        </Text>
+        <Text style={styles.finance}>JMK Financial Servicess</Text>
+        <Text style={styles.assets}>JMK Assets</Text>
+        <Text style={styles.solar}>JMK Solar Solutions</Text>
       </View>
 
       <View style={styles.footer}>
-        <Text style={styles.tagline}>
-          Trust • Growth • Future
-        </Text>
-
-        <Text style={styles.loading}>
-          Secure CRM Loading...
-        </Text>
+        <Text style={styles.tagline}>Trust • Growth • Future</Text>
+        <ActivityIndicator color={COLORS.primary} style={styles.loader} />
+        <Text style={styles.loading}>Secure CRM Loading...</Text>
       </View>
     </View>
   );
@@ -84,7 +60,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.xl,
     backgroundColor: COLORS.background,
   },
-
   enterprise: {
     marginTop: 14,
     color: COLORS.primary,
@@ -92,31 +67,26 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     letterSpacing: 0.5,
   },
-
   segmentContainer: {
     marginTop: 35,
     alignItems: "center",
     gap: 10,
   },
-
   finance: {
     color: COLORS.finance,
     fontSize: 15,
     fontWeight: "700",
   },
-
   assets: {
     color: COLORS.assets,
     fontSize: 15,
     fontWeight: "700",
   },
-
   solar: {
     color: COLORS.solar,
     fontSize: 15,
     fontWeight: "700",
   },
-
   footer: {
     position: "absolute",
     right: 0,
@@ -124,16 +94,17 @@ const styles = StyleSheet.create({
     left: 0,
     alignItems: "center",
   },
-
   tagline: {
     color: COLORS.textMuted,
     fontSize: 14,
     fontWeight: "700",
   },
-
+  loader: {
+    marginTop: 14,
+  },
   loading: {
-    marginTop: 9,
-    color: "#475569",
+    marginTop: 8,
+    color: "#64748B",
     fontSize: 12,
   },
 });

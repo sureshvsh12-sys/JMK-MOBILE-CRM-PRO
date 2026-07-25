@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import {
   Alert,
+  BackHandler,
   FlatList,
   Linking,
   Pressable,
@@ -33,7 +34,34 @@ export default function FollowUpListScreen() {
 
   const load = useCallback(async () => setItems(await getFollowUps()), []);
 
-  useFocusEffect(useCallback(() => { void load(); }, [load]));
+  useFocusEffect(
+    useCallback(() => {
+      void load();
+
+      const subscription = BackHandler.addEventListener(
+        "hardwareBackPress",
+        () => {
+          router.replace("/dashboard");
+          return true;
+        }
+      );
+
+      return () => subscription.remove();
+    }, [load])
+  );
+
+  const goBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+
+    router.replace("/dashboard");
+  };
+
+  const goHome = () => {
+    router.replace("/dashboard");
+  };
 
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -56,7 +84,41 @@ export default function FollowUpListScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
-      <AppHeader segment="Follow-ups" />
+      <AppHeader
+        segment="Follow-ups"
+        onMenuPress={goHome}
+        onNotificationPress={() => router.push("/notifications")}
+        onProfilePress={() => router.push("/settings")}
+      />
+
+      <View style={styles.navigationRow}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+          style={({ pressed }) => [
+            styles.navigationButton,
+            pressed && styles.navigationButtonPressed,
+          ]}
+          onPress={goBack}
+        >
+          <Text style={styles.navigationIcon}>‹</Text>
+          <Text style={styles.navigationText}>Back</Text>
+        </Pressable>
+
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Go to dashboard"
+          style={({ pressed }) => [
+            styles.homeButton,
+            pressed && styles.navigationButtonPressed,
+          ]}
+          onPress={goHome}
+        >
+          <Text style={styles.homeIcon}>⌂</Text>
+          <Text style={styles.homeText}>Home</Text>
+        </Pressable>
+      </View>
+
       <View style={styles.container}>
         <View style={styles.headingRow}>
           <View>
@@ -143,7 +205,59 @@ function Action({ label, onPress }: { label: string; onPress: () => void }) {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: COLORS.background },
-  container: { flex: 1, padding: SPACING.lg },
+  navigationRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.md,
+  },
+  navigationButton: {
+    minHeight: 42,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 14,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.surfaceLight,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  navigationIcon: {
+    color: COLORS.white,
+    marginRight: 7,
+    fontSize: 28,
+    lineHeight: 29,
+    fontWeight: "700",
+  },
+  navigationText: {
+    color: COLORS.white,
+    fontSize: 12,
+    fontWeight: "900",
+  },
+  homeButton: {
+    minHeight: 42,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.primary,
+  },
+  homeIcon: {
+    color: COLORS.white,
+    marginRight: 7,
+    fontSize: 18,
+    fontWeight: "900",
+  },
+  homeText: {
+    color: COLORS.white,
+    fontSize: 12,
+    fontWeight: "900",
+  },
+  navigationButtonPressed: {
+    opacity: 0.72,
+    transform: [{ scale: 0.98 }],
+  },
+  container: { flex: 1, padding: SPACING.lg, paddingTop: SPACING.md },
   headingRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   title: { color: COLORS.text, fontSize: 24, fontWeight: "900" },
   subtitle: { color: COLORS.textMuted, marginTop: 3, fontSize: 12 },

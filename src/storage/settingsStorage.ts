@@ -93,7 +93,7 @@ export async function createBackup(): Promise<string> {
   return JSON.stringify(
     {
       app: "JMK Mobile CRM PRO Enterprise",
-      version: 1,
+      version: 2,
       createdAt: new Date().toISOString(),
       data,
     },

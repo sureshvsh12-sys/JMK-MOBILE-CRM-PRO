@@ -62,8 +62,13 @@ export default function CustomerFormScreen() {
   }, [customerId]);
 
   const handleSave = async () => {
+    if (loading) return;
+
+    const cleanName = name.trim();
     const cleanMobile = mobile.replace(/\D/g, "");
-    if (!name.trim()) {
+    const cleanAlternateMobile = alternateMobile.replace(/\D/g, "");
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanName) {
       Alert.alert("Required", "Customer name enter karein.");
       return;
     }
@@ -72,21 +77,31 @@ export default function CustomerFormScreen() {
       return;
     }
 
+    if (cleanAlternateMobile && cleanAlternateMobile.length !== 10) {
+      Alert.alert("Invalid Alternate Mobile", "Alternate mobile 10 digit ka hona chahiye.");
+      return;
+    }
+
+    if (cleanEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      Alert.alert("Invalid Email", "Valid email address enter karein.");
+      return;
+    }
+
     setLoading(true);
     try {
       const payload = {
-        name,
+        name: cleanName,
         mobile: cleanMobile,
-        alternateMobile,
-        email,
+        alternateMobile: cleanAlternateMobile,
+        email: cleanEmail,
         segment,
         status,
-        city,
-        address,
-        occupation,
-        source,
-        assignedTo,
-        notes,
+        city: city.trim(),
+        address: address.trim(),
+        occupation: occupation.trim(),
+        source: source.trim() || "Mobile App",
+        assignedTo: assignedTo.trim() || "Admin",
+        notes: notes.trim(),
       };
 
       if (customerId) await updateCustomer(customerId, payload);
@@ -113,6 +128,8 @@ export default function CustomerFormScreen() {
         value={value}
         onChangeText={onChangeText}
         keyboardType={options.keyboardType || "default"}
+        autoCapitalize={options.keyboardType === "email-address" ? "none" : "sentences"}
+        autoCorrect={options.keyboardType !== "email-address"}
         multiline={options.multiline}
         placeholderTextColor={COLORS.textMuted}
         style={[styles.input, options.multiline && styles.multiline]}

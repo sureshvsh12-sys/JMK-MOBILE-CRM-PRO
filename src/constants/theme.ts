@@ -1,16 +1,20 @@
 import { Platform } from "react-native";
 
 export const COLORS = {
-  background: "#07111F",
-  surface: "#0F1C2E",
-  surfaceLight: "#17263B",
+  background: "#06111F",
+  surface: "#0D1B2D",
+  surfaceLight: "#15263B",
+  surfaceElevated: "#1B2F48",
   primary: "#DC2626",
   primaryDark: "#991B1B",
+  primarySoft: "rgba(220,38,38,0.14)",
   white: "#FFFFFF",
   black: "#000000",
   text: "#F8FAFC",
-  textMuted: "#94A3B8",
-  border: "#26364D",
+  textMuted: "#9AAEC2",
+  textSoft: "#C4D0DC",
+  border: "#263A52",
+  borderSoft: "rgba(148,163,184,0.18)",
   success: "#16A34A",
   warning: "#F59E0B",
   danger: "#DC2626",
@@ -47,11 +51,8 @@ export const RADIUS = {
 
 export const SHADOW = {
   shadowColor: "#000000",
-  shadowOffset: {
-    width: 0,
-    height: 6,
-  },
-  shadowOpacity: 0.25,
+  shadowOffset: { width: 0, height: 6 },
+  shadowOpacity: 0.28,
   shadowRadius: 12,
   elevation: 8,
 } as const;
@@ -71,13 +72,13 @@ export const Colors = {
   dark: {
     text: "#ECEDEE",
     textSecondary: "#9BA1A6",
-    background: "#07111F",
-    backgroundElement: "#0F1C2E",
-    backgroundSelected: "#17263B",
-    tint: "#FFFFFF",
+    background: COLORS.background,
+    backgroundElement: COLORS.surface,
+    backgroundSelected: COLORS.surfaceLight,
+    tint: COLORS.white,
     icon: "#9BA1A6",
     tabIconDefault: "#9BA1A6",
-    tabIconSelected: "#DC2626",
+    tabIconSelected: COLORS.primary,
   },
 } as const;
 
@@ -117,5 +118,5 @@ export const Fonts =
     },
   }) ?? defaultFonts;
 
-export const BottomTabInset = 84;
+export const BottomTabInset = 82;
 export const MaxContentWidth = 960;

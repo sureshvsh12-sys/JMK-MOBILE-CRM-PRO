@@ -115,16 +115,28 @@ export default function CustomerDocumentsScreen() {
 
     setSaving(true);
     try {
+      const cleanForm = {
+        ...form,
+        title: form.title.trim(),
+        documentNumber: form.documentNumber.trim(),
+        fileName: form.fileName.trim(),
+        localUri: form.localUri.trim(),
+        notes: form.notes.trim(),
+      };
+
       if (editingId) {
-        await updateCustomerDocument(editingId, form);
+        await updateCustomerDocument(editingId, cleanForm);
       } else {
-        await addCustomerDocument({ ...form, customerId });
+        await addCustomerDocument({ ...cleanForm, customerId });
       }
 
       setModalVisible(false);
       setEditingId(null);
       setForm(EMPTY_FORM);
       await loadData();
+    } catch (error) {
+      console.error("Unable to save customer document:", error);
+      Alert.alert("Save Failed", "Customer document save nahi ho saka.");
     } finally {
       setSaving(false);
     }
@@ -137,8 +149,13 @@ export default function CustomerDocumentsScreen() {
         text: "Delete",
         style: "destructive",
         onPress: async () => {
-          await deleteCustomerDocument(document.id);
-          await loadData();
+          try {
+            await deleteCustomerDocument(document.id);
+            await loadData();
+          } catch (error) {
+            console.error("Unable to delete customer document:", error);
+            Alert.alert("Delete Failed", "Customer document delete nahi ho saka.");
+          }
         },
       },
     ]);

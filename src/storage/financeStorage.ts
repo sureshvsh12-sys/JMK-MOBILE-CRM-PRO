@@ -35,34 +35,10 @@ export interface FinanceSummary {
 
 const STORAGE_KEY = "jmk_mobile_finance_entries";
 
-const SAMPLE_ENTRIES: FinanceEntry[] = [
-  {
-    id: "finance-sample-income",
-    type: "Income",
-    category: "Booking",
-    amount: 125000,
-    title: "Booking payment received",
-    partyName: "Rahul Sharma",
-    paymentMode: "Bank",
-    entryDate: new Date().toISOString().slice(0, 10),
-    notes: "Initial booking collection",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: "finance-sample-expense",
-    type: "Expense",
-    category: "Office",
-    amount: 10000,
-    title: "Office rent",
-    partyName: "Landlord",
-    paymentMode: "UPI",
-    entryDate: new Date().toISOString().slice(0, 10),
-    notes: "Monthly office rent",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-];
+const LEGACY_DEMO_IDS = new Set([
+  "finance-sample-income",
+  "finance-sample-expense",
+]);
 
 function createId(): string {
   return `finance-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -95,16 +71,22 @@ export async function getFinanceEntries(): Promise<FinanceEntry[]> {
   try {
     const saved = await AsyncStorage.getItem(STORAGE_KEY);
     if (!saved) {
-      await writeEntries(SAMPLE_ENTRIES);
-      return SAMPLE_ENTRIES;
+      return [];
     }
 
     const parsed: unknown = JSON.parse(saved);
     if (!Array.isArray(parsed)) return [];
 
-    return parsed
+    const entries = parsed
       .map((item) => normalizeEntry(item as Partial<FinanceEntry>))
+      .filter((entry) => !LEGACY_DEMO_IDS.has(entry.id))
       .sort((a, b) => b.entryDate.localeCompare(a.entryDate));
+
+    if (entries.length !== parsed.length) {
+      await writeEntries(entries);
+    }
+
+    return entries;
   } catch {
     return [];
   }

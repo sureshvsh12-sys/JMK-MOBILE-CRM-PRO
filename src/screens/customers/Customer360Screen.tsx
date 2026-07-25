@@ -49,16 +49,36 @@ export default function Customer360Screen() {
     title: string
   ) => {
     if (!customerId) return;
-    await addCustomerActivity(customerId, type, title);
-    await loadData();
-    await Linking.openURL(url);
+
+    try {
+      const supported = await Linking.canOpenURL(url);
+
+      if (!supported) {
+        Alert.alert("Not Available", "Required app is device par available nahi hai.");
+        return;
+      }
+
+      await addCustomerActivity(customerId, type, title);
+      await loadData();
+      await Linking.openURL(url);
+    } catch (error) {
+      console.error("Unable to complete customer action:", error);
+      Alert.alert("Action Failed", "Customer action complete nahi ho saka.");
+    }
   };
 
   const addNote = async () => {
-    if (!customerId || !note.trim()) return;
-    await addCustomerActivity(customerId, "note", "Customer Note", note.trim());
-    setNote("");
-    await loadData();
+    const cleanNote = note.trim();
+    if (!customerId || !cleanNote) return;
+
+    try {
+      await addCustomerActivity(customerId, "note", "Customer Note", cleanNote);
+      setNote("");
+      await loadData();
+    } catch (error) {
+      console.error("Unable to add customer note:", error);
+      Alert.alert("Save Failed", "Customer note save nahi ho saka.");
+    }
   };
 
   if (!customerId || !customer) {

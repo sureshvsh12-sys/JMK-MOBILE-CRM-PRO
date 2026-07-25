@@ -206,11 +206,17 @@ export default function LeadFormScreen() {
   }, [loadLead]);
 
   async function handleSave() {
+    if (loading) {
+      return;
+    }
+
     const cleanCustomer =
       customer.trim();
 
     const cleanMobile =
       mobile.replace(/\D/g, "");
+
+    const cleanEmail = email.trim().toLowerCase();
 
     if (!cleanCustomer) {
       Alert.alert(
@@ -225,6 +231,18 @@ export default function LeadFormScreen() {
       Alert.alert(
         "Valid Mobile Required",
         "Kam se kam 10 digit mobile number enter karein."
+      );
+
+      return;
+    }
+
+    if (
+      cleanEmail &&
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)
+    ) {
+      Alert.alert(
+        "Invalid Email",
+        "Valid email address enter karein."
       );
 
       return;
@@ -246,7 +264,7 @@ export default function LeadFormScreen() {
       const leadData = {
         customer: cleanCustomer,
         mobile: cleanMobile,
-        email: email.trim().toLowerCase(),
+        email: cleanEmail,
         segment,
         source: source.trim(),
         property: property.trim(),

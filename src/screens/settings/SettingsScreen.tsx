@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import type { ComponentProps, PropsWithChildren } from "react";
 import {
   Alert,
+  BackHandler,
   Pressable,
   ScrollView,
   Share,
@@ -11,10 +12,11 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { useFocusEffect } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import AppHeader from "../../components/AppHeader";
+import SystemHealthCard from "../../components/settings/SystemHealthCard";
 import {
   COLORS,
   RADIUS,
@@ -28,6 +30,8 @@ import {
   saveSettings,
 } from "../../storage/settingsStorage";
 import type { AppSettings } from "../../storage/settingsStorage";
+import { logout } from "../../storage/authStorage";
+import { useSync } from "../../hooks/useSync";
 
 const SEGMENTS: AppSettings["defaultSegment"][] = [
   "Finance",
@@ -36,11 +40,14 @@ const SEGMENTS: AppSettings["defaultSegment"][] = [
 ];
 
 export default function SettingsScreen() {
+  const router = useRouter();
+
   const [settings, setSettings] = useState<AppSettings | null>(
     null
   );
   const [backupText, setBackupText] = useState("");
   const [saving, setSaving] = useState(false);
+  const { config: syncConfig, queueCount, syncing, saveConfig: saveSyncConfig, runSync } = useSync();
 
   const loadSettings = useCallback(async () => {
     setSettings(await getSettings());
@@ -49,8 +56,33 @@ export default function SettingsScreen() {
   useFocusEffect(
     useCallback(() => {
       void loadSettings();
-    }, [loadSettings])
+
+      const backSubscription = BackHandler.addEventListener(
+        "hardwareBackPress",
+        () => {
+          router.replace("/dashboard");
+          return true;
+        }
+      );
+
+      return () => {
+        backSubscription.remove();
+      };
+    }, [loadSettings, router])
   );
+
+  const goBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+
+    router.replace("/dashboard");
+  };
+
+  const goHome = () => {
+    router.replace("/dashboard");
+  };
 
   const updateField = <K extends keyof AppSettings>(
     key: K,
@@ -108,6 +140,23 @@ export default function SettingsScreen() {
     }
   };
 
+
+  const handleSaveSync = async () => {
+    if (!syncConfig) return;
+    const apiBaseUrl = syncConfig.apiBaseUrl.trim().replace(/\/$/, "");
+    if (apiBaseUrl && !/^https?:\/\//i.test(apiBaseUrl)) {
+      Alert.alert("Invalid API URL", "URL http:// ya https:// se start honi chahiye.");
+      return;
+    }
+    await saveSyncConfig({ ...syncConfig, apiBaseUrl });
+    Alert.alert("Saved", "Sync settings save ho gayi.");
+  };
+
+  const handleSyncNow = async () => {
+    const result = await runSync();
+    Alert.alert(result.success ? "Sync Complete" : result.queued ? "Saved Offline" : "Sync Required", result.message);
+  };
+
   const handleCreateBackup = async () => {
     try {
       const backup = await createBackup();
@@ -163,6 +212,24 @@ export default function SettingsScreen() {
     );
   };
 
+  const handleLogout = () => {
+    Alert.alert(
+      "Logout",
+      "JMK Mobile CRM se logout karna hai?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Logout",
+          style: "destructive",
+          onPress: async () => {
+            await logout();
+            router.replace("/login");
+          },
+        },
+      ]
+    );
+  };
+
   const handleClearData = () => {
     Alert.alert(
       "Delete All CRM Data",
@@ -193,7 +260,12 @@ export default function SettingsScreen() {
   if (!settings) {
     return (
       <SafeAreaView style={styles.safeArea}>
-        <AppHeader segment="Settings" />
+        <AppHeader
+          segment="Settings"
+          onMenuPress={goHome}
+          onNotificationPress={() => router.push("/notifications")}
+          onProfilePress={goHome}
+        />
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>
             Loading settings...
@@ -205,7 +277,40 @@ export default function SettingsScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
-      <AppHeader segment="Settings" />
+      <AppHeader
+        segment="Settings"
+        onMenuPress={goHome}
+        onNotificationPress={() => router.push("/notifications")}
+        onProfilePress={goHome}
+      />
+
+      <View style={styles.navigationRow}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+          style={({ pressed }) => [
+            styles.navigationButton,
+            pressed && styles.navigationButtonPressed,
+          ]}
+          onPress={goBack}
+        >
+          <Text style={styles.navigationIcon}>‹</Text>
+          <Text style={styles.navigationText}>Back</Text>
+        </Pressable>
+
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Go to dashboard"
+          style={({ pressed }) => [
+            styles.homeButton,
+            pressed && styles.navigationButtonPressed,
+          ]}
+          onPress={goHome}
+        >
+          <Text style={styles.homeIcon}>⌂</Text>
+          <Text style={styles.homeText}>Home</Text>
+        </Pressable>
+      </View>
 
       <ScrollView
         contentContainerStyle={styles.container}
@@ -322,6 +427,45 @@ export default function SettingsScreen() {
           </Text>
         </Pressable>
 
+
+        <Section title="Website & CRM Sync">
+          <Text style={styles.helperText}>
+            Backend API ready hone ke baad uska secure base URL yahan enter karein.
+          </Text>
+
+          <Field
+            label="API Base URL"
+            value={syncConfig?.apiBaseUrl || ""}
+            keyboardType="default"
+            onChangeText={(value) =>
+              syncConfig && void saveSyncConfig({ ...syncConfig, apiBaseUrl: value })
+            }
+          />
+
+          <SettingSwitch
+            label="Automatic Sync"
+            description="App open hone par pending data sync karne ki setting."
+            value={syncConfig?.autoSyncEnabled || false}
+            onValueChange={(value) =>
+              syncConfig && void saveSyncConfig({ ...syncConfig, autoSyncEnabled: value })
+            }
+          />
+
+          <Text style={styles.syncStatus}>
+            Last sync: {syncConfig?.lastSyncAt ? new Date(syncConfig.lastSyncAt).toLocaleString() : "Not synced"}
+            {"\n"}Pending offline batches: {queueCount}
+          </Text>
+
+          <View style={styles.syncButtonRow}>
+            <Pressable style={styles.secondaryButton} onPress={() => void handleSaveSync()}>
+              <Text style={styles.secondaryButtonText}>Save Sync Settings</Text>
+            </Pressable>
+            <Pressable style={styles.primaryButton} disabled={syncing} onPress={() => void handleSyncNow()}>
+              <Text style={styles.primaryButtonText}>{syncing ? "Syncing..." : "Sync Now"}</Text>
+            </Pressable>
+          </View>
+        </Section>
+
         <Section title="Backup & Restore">
           <Text style={styles.helperText}>
             Backup create karke JSON share karein. Restore ke liye wahi JSON
@@ -356,6 +500,8 @@ export default function SettingsScreen() {
           </Pressable>
         </Section>
 
+        <SystemHealthCard />
+
         <Section title="Danger Zone">
           <Text style={styles.dangerDescription}>
             Pehle backup bana lena. Delete ke baad offline data wapas nahi aayega.
@@ -370,6 +516,17 @@ export default function SettingsScreen() {
             </Text>
           </Pressable>
         </Section>
+
+        <Pressable
+          accessibilityRole="button"
+          style={({ pressed }) => [
+            styles.logoutButton,
+            pressed && styles.navigationButtonPressed,
+          ]}
+          onPress={handleLogout}
+        >
+          <Text style={styles.logoutButtonText}>Logout from JMK CRM</Text>
+        </Pressable>
 
         <Text style={styles.footer}>
           JMK CRM PRO Enterprise{"\n"}
@@ -470,7 +627,68 @@ const styles = StyleSheet.create({
 
   container: {
     padding: SPACING.lg,
+    paddingTop: SPACING.md,
     paddingBottom: 48,
+  },
+
+  navigationRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.md,
+  },
+
+  navigationButton: {
+    minHeight: 42,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 14,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.surfaceLight,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+
+  navigationIcon: {
+    color: COLORS.white,
+    marginRight: 7,
+    fontSize: 28,
+    lineHeight: 29,
+    fontWeight: "700",
+  },
+
+  navigationText: {
+    color: COLORS.white,
+    fontSize: 12,
+    fontWeight: "900",
+  },
+
+  homeButton: {
+    minHeight: 42,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.primary,
+  },
+
+  homeIcon: {
+    color: COLORS.white,
+    marginRight: 7,
+    fontSize: 18,
+    fontWeight: "900",
+  },
+
+  homeText: {
+    color: COLORS.white,
+    fontSize: 12,
+    fontWeight: "900",
+  },
+
+  navigationButtonPressed: {
+    opacity: 0.72,
+    transform: [{ scale: 0.98 }],
   },
 
   loadingContainer: {
@@ -503,6 +721,18 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.border,
+  },
+
+  syncStatus: {
+    color: COLORS.textMuted,
+    fontSize: 12,
+    lineHeight: 20,
+    marginTop: SPACING.sm,
+    marginBottom: SPACING.md,
+  },
+
+  syncButtonRow: {
+    gap: SPACING.sm,
   },
 
   sectionTitle: {
@@ -674,6 +904,23 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontSize: 11,
     fontWeight: "900",
+  },
+
+  logoutButton: {
+    minHeight: 50,
+    marginTop: SPACING.xl,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: "rgba(248,113,113,0.45)",
+    backgroundColor: "rgba(220,38,38,0.12)",
+  },
+
+  logoutButtonText: {
+    color: "#FCA5A5",
+    fontSize: 14,
+    fontWeight: "800",
   },
 
   footer: {

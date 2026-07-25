@@ -152,9 +152,9 @@ export default function LeadListScreen() {
         userName="Suresh Vishwakarma"
         segment="Enterprise Leads"
         notificationCount={4}
-        onMenuPress={() => {}}
-        onNotificationPress={() => {}}
-        onProfilePress={() => {}}
+        onMenuPress={() => router.push("/settings")}
+        onNotificationPress={() => router.push("/notifications")}
+        onProfilePress={() => router.push("/settings")}
       />
 
       <FlatList
