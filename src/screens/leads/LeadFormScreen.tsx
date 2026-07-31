@@ -30,11 +30,12 @@ import {
 } from "../../constants/theme";
 
 import {
-    addLead,
+    createLead,
     deleteLead,
-    getLeadById,
+    fetchLeadById,
     updateLead,
-} from "../../storage/leadStorage";
+    convertLeadToCustomer,
+} from "../../services/leadsService";
 
 import {
     LEAD_PRIORITIES,
@@ -102,7 +103,7 @@ export default function LeadFormScreen() {
     useState("");
 
   const [segment, setSegment] =
-    useState<LeadSegment>("Assets");
+    useState<LeadSegment>("assets");
 
   const [source, setSource] =
     useState("Mobile App");
@@ -150,8 +151,12 @@ export default function LeadFormScreen() {
         return;
       }
 
-      const storedLead =
-        await getLeadById(leadId);
+      let storedLead;
+      try {
+        storedLead = await fetchLeadById(leadId);
+      } catch (error) {
+        console.error("Unable to load lead:", error);
+      }
 
       if (!storedLead) {
         Alert.alert(
@@ -273,7 +278,6 @@ export default function LeadFormScreen() {
         value: numericValue,
         stage,
         priority,
-        temperature,
         assignedTo: assignedTo.trim() || "Admin",
         nextFollowup: nextFollowup.trim(),
         notes: notes.trim(),
@@ -285,7 +289,7 @@ export default function LeadFormScreen() {
           leadData
         );
       } else {
-        await addLead(leadData);
+        await createLead(leadData);
       }
 
       router.replace("/leads");
@@ -302,6 +306,48 @@ export default function LeadFormScreen() {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleConvertToCustomer() {
+    if (!leadId) return;
+
+    if (stage !== "Completed") {
+      Alert.alert(
+        "Lead Not Completed",
+        "Customer banane se pahle Lead stage Completed karein."
+      );
+      return;
+    }
+
+    Alert.alert(
+      "Convert to Customer",
+      `${customer || "Ye lead"} ko Customer banana hai?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Convert",
+          onPress: async () => {
+            setLoading(true);
+            try {
+              const customerId = await convertLeadToCustomer(leadId);
+              Alert.alert("Customer Created", "Lead successfully Customer ban gayi.", [
+                {
+                  text: "Open Customer",
+                  onPress: () => router.replace({ pathname: "/customer-360", params: { id: customerId } }),
+                },
+              ]);
+            } catch (error) {
+              Alert.alert(
+                "Conversion Failed",
+                error instanceof Error ? error.message : "Lead Customer nahi ban saki."
+              );
+            } finally {
+              setLoading(false);
+            }
+          },
+        },
+      ]
+    );
   }
 
   function handleDelete() {
@@ -628,6 +674,15 @@ export default function LeadFormScreen() {
           onPress={() => void handleSave()}
           loading={loading}
         />
+
+        {isEditing && stage === "Completed" ? (
+          <Pressable
+            onPress={() => void handleConvertToCustomer()}
+            style={styles.convertButton}
+          >
+            <Text style={styles.convertButtonText}>Convert to Customer</Text>
+          </Pressable>
+        ) : null}
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -698,6 +753,23 @@ const styles = StyleSheet.create({
 
   headerSpacer: {
     width: 60,
+  },
+
+  convertButton: {
+    marginTop: SPACING.md,
+    minHeight: 50,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.success,
+    backgroundColor: "rgba(34,197,94,0.12)",
+  },
+
+  convertButtonText: {
+    color: COLORS.success,
+    fontSize: 13,
+    fontWeight: "900",
   },
 
   scrollContent: {

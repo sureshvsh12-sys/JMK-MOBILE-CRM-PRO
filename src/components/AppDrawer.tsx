@@ -9,6 +9,7 @@ type DrawerItem = { title: string; icon: string; route: Href; matchPath: string 
 
 const ITEMS: readonly DrawerItem[] = [
   { title: "Dashboard", icon: "⌂", route: "/dashboard", matchPath: "/dashboard" },
+  { title: "Raw Contacts", icon: "☎", route: "/raw-contacts", matchPath: "/raw-contacts" },
   { title: "Leads", icon: "◎", route: "/leads", matchPath: "/leads" },
   { title: "Customers", icon: "♟", route: "/customers", matchPath: "/customers" },
   { title: "Follow-ups", icon: "✓", route: "/followups", matchPath: "/followups" },

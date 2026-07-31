@@ -1,118 +1,185 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-
-import {
+import { supabase } from "../services/supabase";
+import type {
   Customer,
+  CustomerInput,
   CustomerSegment,
   CustomerStatus,
 } from "../types/customer";
 
-const CUSTOMERS_STORAGE_KEY = "jmk_mobile_customers";
+const CUSTOMER_COLUMNS = [
+  "id",
+  "name",
+  "full_name",
+  "mobile",
+  "alternate_mobile",
+  "email",
+  "segment",
+  "status",
+  "city",
+  "location",
+  "address",
+  "occupation",
+  "source",
+  "assigned_to",
+  "notes",
+  "lead_id",
+  "raw_contact_id",
+  "created_at",
+  "updated_at",
+].join(",");
 
-const LEGACY_DEMO_IDS = new Set(["customer-1", "customer-2"]);
+type CustomerRow = Record<string, unknown>;
 
-function createId(): string {
-  return `customer-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+function normalizeSegment(value: unknown): CustomerSegment {
+  const segment = String(value || "assets").toLowerCase();
+  if (segment === "finance") return "Finance";
+  if (segment === "solar") return "Solar";
+  return "Assets";
 }
 
-function normalizeCustomer(value: Partial<Customer>): Customer {
-  const now = new Date().toISOString();
+function normalizeStatus(value: unknown): CustomerStatus {
+  const status = String(value || "Active").toLowerCase();
+  if (status === "inactive") return "Inactive";
+  if (status === "prospect") return "Prospect";
+  return "Active";
+}
 
+function toDatabaseSegment(segment: CustomerSegment): string {
+  return segment.toLowerCase();
+}
+
+function mapCustomer(row: CustomerRow): Customer {
   return {
-    id: value.id || createId(),
-    name: String(value.name || "").trim(),
-    mobile: String(value.mobile || "").replace(/\D/g, ""),
-    alternateMobile: String(value.alternateMobile || "").replace(/\D/g, ""),
-    email: String(value.email || "").trim().toLowerCase(),
-    segment: (value.segment as CustomerSegment) || "Assets",
-    status: (value.status as CustomerStatus) || "Prospect",
-    city: String(value.city || "").trim(),
-    address: String(value.address || "").trim(),
-    occupation: String(value.occupation || "").trim(),
-    source: String(value.source || "").trim() || "Mobile App",
-    assignedTo: String(value.assignedTo || "").trim() || "Admin",
-    notes: String(value.notes || "").trim(),
-    createdAt: value.createdAt || now,
-    updatedAt: now,
+    id: String(row.id || ""),
+    name: String(row.full_name || row.name || ""),
+    mobile: String(row.mobile || ""),
+    alternateMobile: String(row.alternate_mobile || ""),
+    email: String(row.email || ""),
+    segment: normalizeSegment(row.segment),
+    status: normalizeStatus(row.status),
+    city: String(row.city || row.location || ""),
+    address: String(row.address || ""),
+    occupation: String(row.occupation || ""),
+    source: String(row.source || "Mobile App"),
+    assignedTo: String(row.assigned_to || "Admin"),
+    notes: String(row.notes || ""),
+    leadId: row.lead_id ? String(row.lead_id) : null,
+    rawContactId: row.raw_contact_id ? String(row.raw_contact_id) : null,
+    createdAt: String(row.created_at || ""),
+    updatedAt: String(row.updated_at || row.created_at || ""),
   };
 }
 
-async function saveCustomers(customers: Customer[]): Promise<void> {
-  await AsyncStorage.setItem(CUSTOMERS_STORAGE_KEY, JSON.stringify(customers));
+function toPayload(value: CustomerInput) {
+  const name = value.name.trim();
+  const city = value.city.trim();
+
+  return {
+    name,
+    full_name: name,
+    mobile: value.mobile.replace(/\D/g, ""),
+    alternate_mobile: value.alternateMobile.replace(/\D/g, "") || null,
+    email: value.email.trim().toLowerCase() || null,
+    segment: toDatabaseSegment(value.segment),
+    status: value.status,
+    city: city || null,
+    location: city || null,
+    address: value.address.trim() || null,
+    occupation: value.occupation.trim() || null,
+    source: value.source.trim() || "Mobile App",
+    assigned_to: value.assignedTo.trim() || "Admin",
+    notes: value.notes.trim() || null,
+    updated_at: new Date().toISOString(),
+  };
 }
 
-export async function getCustomers(): Promise<Customer[]> {
-  try {
-    const storedValue = await AsyncStorage.getItem(CUSTOMERS_STORAGE_KEY);
+export async function getCustomers(options?: {
+  segment?: CustomerSegment | "All";
+  status?: CustomerStatus | "All";
+  search?: string;
+  limit?: number;
+}): Promise<Customer[]> {
+  let query = supabase
+    .from("customers")
+    .select(CUSTOMER_COLUMNS)
+    .order("updated_at", { ascending: false })
+    .limit(options?.limit ?? 500);
 
-    if (!storedValue) {
-      return [];
-    }
-
-    const parsedValue: unknown = JSON.parse(storedValue);
-
-    if (!Array.isArray(parsedValue)) {
-      return [];
-    }
-
-    const customers = parsedValue
-      .map((item) => normalizeCustomer(item as Partial<Customer>))
-      .filter((customer) => !LEGACY_DEMO_IDS.has(customer.id));
-
-    if (customers.length !== parsedValue.length) {
-      await saveCustomers(customers);
-    }
-
-    return customers;
-  } catch (error) {
-    console.error("Unable to read customers:", error);
-    return [];
+  if (options?.segment && options.segment !== "All") {
+    query = query.eq("segment", toDatabaseSegment(options.segment));
   }
+
+  if (options?.status && options.status !== "All") {
+    query = query.eq("status", options.status);
+  }
+
+  const search = options?.search?.trim().replace(/[%_,()]/g, " ");
+  if (search) {
+    query = query.or(
+      `full_name.ilike.%${search}%,name.ilike.%${search}%,mobile.ilike.%${search}%,city.ilike.%${search}%,location.ilike.%${search}%`
+    );
+  }
+
+  const { data, error } = await query;
+  if (error) throw error;
+  return (data ?? []).map((row) => mapCustomer(row as CustomerRow));
 }
 
 export async function getCustomerById(id: string): Promise<Customer | null> {
-  const customers = await getCustomers();
-  return customers.find((customer) => customer.id === id) || null;
+  const { data, error } = await supabase
+    .from("customers")
+    .select(CUSTOMER_COLUMNS)
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data ? mapCustomer(data as CustomerRow) : null;
 }
 
-export async function addCustomer(value: Partial<Customer>): Promise<Customer> {
-  const customers = await getCustomers();
-  const customer = normalizeCustomer(value);
-  await saveCustomers([customer, ...customers]);
-  return customer;
+export async function addCustomer(value: CustomerInput): Promise<Customer> {
+  const now = new Date().toISOString();
+  const { data, error } = await supabase
+    .from("customers")
+    .insert({ ...toPayload(value), created_at: now })
+    .select(CUSTOMER_COLUMNS)
+    .single();
+
+  if (error) throw error;
+  return mapCustomer(data as CustomerRow);
 }
 
 export async function updateCustomer(
   id: string,
-  updates: Partial<Customer>
-): Promise<Customer | null> {
-  const customers = await getCustomers();
-  let updatedCustomer: Customer | null = null;
+  updates: CustomerInput
+): Promise<Customer> {
+  const { data, error } = await supabase
+    .from("customers")
+    .update(toPayload(updates))
+    .eq("id", id)
+    .select(CUSTOMER_COLUMNS)
+    .single();
 
-  const nextCustomers = customers.map((customer) => {
-    if (customer.id !== id) return customer;
-
-    updatedCustomer = normalizeCustomer({
-      ...customer,
-      ...updates,
-      id: customer.id,
-      createdAt: customer.createdAt,
-    });
-
-    return updatedCustomer;
-  });
-
-  if (!updatedCustomer) return null;
-
-  await saveCustomers(nextCustomers);
-  return updatedCustomer;
+  if (error) throw error;
+  return mapCustomer(data as CustomerRow);
 }
 
 export async function deleteCustomer(id: string): Promise<boolean> {
-  const customers = await getCustomers();
-  const nextCustomers = customers.filter((customer) => customer.id !== id);
-
-  if (nextCustomers.length === customers.length) return false;
-
-  await saveCustomers(nextCustomers);
+  const { error } = await supabase.from("customers").delete().eq("id", id);
+  if (error) throw error;
   return true;
+}
+
+export function subscribeToCustomers(onChange: () => void) {
+  const channel = supabase
+    .channel(`mobile-customers-${Date.now()}`)
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "customers" },
+      onChange
+    )
+    .subscribe();
+
+  return () => {
+    void supabase.removeChannel(channel);
+  };
 }

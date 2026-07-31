@@ -30,7 +30,7 @@ import {
   saveSettings,
 } from "../../storage/settingsStorage";
 import type { AppSettings } from "../../storage/settingsStorage";
-import { logout } from "../../storage/authStorage";
+import { useAuth } from "../../context/AuthContext";
 import { useSync } from "../../hooks/useSync";
 
 const SEGMENTS: AppSettings["defaultSegment"][] = [
@@ -41,6 +41,7 @@ const SEGMENTS: AppSettings["defaultSegment"][] = [
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const { signOut } = useAuth();
 
   const [settings, setSettings] = useState<AppSettings | null>(
     null
@@ -222,8 +223,15 @@ export default function SettingsScreen() {
           text: "Logout",
           style: "destructive",
           onPress: async () => {
-            await logout();
-            router.replace("/login");
+            try {
+              await signOut();
+              router.replace("/login");
+            } catch (error) {
+              Alert.alert(
+                "Logout Failed",
+                error instanceof Error ? error.message : "Logout nahi ho saka."
+              );
+            }
           },
         },
       ]

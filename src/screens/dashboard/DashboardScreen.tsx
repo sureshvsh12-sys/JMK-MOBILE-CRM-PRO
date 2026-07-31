@@ -9,6 +9,7 @@ import DashboardStatCard from "../../components/DashboardStatCard";
 import HomeQuickActions from "../../components/HomeQuickActions";
 import QuickActionCard from "../../components/QuickActionCard";
 import { COLORS, RADIUS, SPACING } from "../../constants/theme";
+import { useAuth } from "../../context/AuthContext";
 import { useDashboardStats } from "../../hooks/useDashboardStats";
 
 type DashboardStat = {
@@ -73,6 +74,8 @@ function formatAmount(value: number): string {
 export default function DashboardScreen() {
   const router = useRouter();
   const { data, isLoading, error, refresh } = useDashboardStats();
+  const { user, signOut } = useAuth();
+  const displayName = String(user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email || "JMK User");
 
   const dashboardStats = useMemo<readonly DashboardStat[]>(
     () => [
@@ -139,7 +142,14 @@ export default function DashboardScreen() {
       {
         text: "Logout",
         style: "destructive",
-        onPress: () => router.replace("/login"),
+        onPress: async () => {
+          try {
+            await signOut();
+            router.replace("/login");
+          } catch (reason) {
+            Alert.alert("Logout Failed", reason instanceof Error ? reason.message : "Please try again.");
+          }
+        },
       },
     ]);
   }
@@ -147,7 +157,7 @@ export default function DashboardScreen() {
   return (
     <View style={styles.container}>
       <AppHeader
-        userName="Suresh Vishwakarma"
+        userName={displayName}
         segment="CRM PRO Enterprise"
         notificationCount={data.unreadNotifications}
         onMenuPress={() => openRoute("/settings")}
@@ -163,7 +173,7 @@ export default function DashboardScreen() {
         <View style={styles.welcomeCard}>
           <View style={styles.welcomeContent}>
             <Text style={styles.welcomeLabel}>Welcome Back</Text>
-            <Text style={styles.userName}>Suresh Vishwakarma</Text>
+            <Text style={styles.userName}>{displayName}</Text>
             <Text style={styles.welcomeDescription}>
               Aaj ke business updates aur important follow-ups yahan dekhein.
             </Text>
@@ -177,7 +187,7 @@ export default function DashboardScreen() {
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Enterprise Overview</Text>
           <Text style={styles.sectionSubtitle}>
-            {isLoading ? "Refreshing..." : "Live CRM summary"}
+            {isLoading ? "Refreshing..." : data.source === "cloud" ? "Live Supabase summary" : "Local CRM summary"}
           </Text>
         </View>
 

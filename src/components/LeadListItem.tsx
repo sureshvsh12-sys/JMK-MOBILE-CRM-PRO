@@ -19,6 +19,7 @@ import {
 type LeadListItemProps = {
   lead: Lead;
   onPress: () => void;
+  onStagePress?: () => void;
 };
 
 function getPriorityColor(
@@ -52,6 +53,7 @@ function getTemperatureColor(
 export default function LeadListItem({
   lead,
   onPress,
+  onStagePress,
 }: LeadListItemProps) {
   function handleCall() {
     const mobile = String(
@@ -163,11 +165,15 @@ export default function LeadListItem({
       </View>
 
       <View style={styles.tagsRow}>
-        <View style={styles.stageBadge}>
-          <Text style={styles.stageText}>
-            {lead.stage}
-          </Text>
-        </View>
+        <Pressable
+          onPress={(event) => {
+            event.stopPropagation();
+            onStagePress?.();
+          }}
+          style={styles.stageBadge}
+        >
+          <Text style={styles.stageText}>{lead.stage} ▾</Text>
+        </Pressable>
 
         <View
           style={[
@@ -195,7 +201,7 @@ export default function LeadListItem({
 
         <View style={styles.segmentBadge}>
           <Text style={styles.segmentText}>
-            {lead.segment}
+            {lead.segment === "finance" ? "Finance" : lead.segment === "solar" ? "Solar" : "Assets"}
           </Text>
         </View>
       </View>

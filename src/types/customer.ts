@@ -15,8 +15,22 @@ export type Customer = {
   source: string;
   assignedTo: string;
   notes: string;
+  leadId: string | null;
+  rawContactId: string | null;
   createdAt: string;
   updatedAt: string;
+};
+
+export type CustomerInput = Omit<
+  Customer,
+  "id" | "leadId" | "rawContactId" | "createdAt" | "updatedAt"
+>;
+
+export type Customer360Summary = {
+  followUps: number;
+  quotations: number;
+  payments: number;
+  calls: number;
 };
 
 export const CUSTOMER_SEGMENTS: CustomerSegment[] = [
