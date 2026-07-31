@@ -1,4 +1,5 @@
 export type SyncEntity =
+  | "rawContacts"
   | "customers"
   | "leads"
   | "followups"

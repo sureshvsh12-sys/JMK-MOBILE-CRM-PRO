@@ -21,8 +21,30 @@ function withoutPassword(account: StoredAuthAccount): AuthUser {
 }
 
 export async function hasAuthAccount(): Promise<boolean> {
-  const value = await AsyncStorage.getItem(AUTH_ACCOUNT_KEY);
-  return Boolean(value);
+  const account = await getAuthAccount();
+  return Boolean(account);
+}
+
+export async function getAuthAccount(): Promise<StoredAuthAccount | null> {
+  try {
+    const value = await AsyncStorage.getItem(AUTH_ACCOUNT_KEY);
+
+    if (!value) {
+      return null;
+    }
+
+    const account = JSON.parse(value) as StoredAuthAccount;
+
+    if (!account?.id || !account?.email) {
+      await AsyncStorage.removeItem(AUTH_ACCOUNT_KEY);
+      return null;
+    }
+
+    return account;
+  } catch {
+    await AsyncStorage.removeItem(AUTH_ACCOUNT_KEY);
+    return null;
+  }
 }
 
 export async function createOwnerAccount(
@@ -41,15 +63,19 @@ export async function createOwnerAccount(
   }
 
   if (password.length < 6) {
-    throw new Error("Password kam se kam 6 characters ka hona chahiye.");
+    throw new Error(
+      "Password kam se kam 6 characters ka hona chahiye."
+    );
   }
 
-  const existing = await AsyncStorage.getItem(AUTH_ACCOUNT_KEY);
+  const existing = await getAuthAccount();
+
   if (existing) {
     throw new Error("Admin account pehle se configured hai.");
   }
 
   const now = new Date().toISOString();
+
   const account: StoredAuthAccount = {
     id: `owner-${Date.now()}`,
     name,
@@ -75,14 +101,15 @@ export async function createOwnerAccount(
   return session;
 }
 
-export async function login(input: LoginInput): Promise<AuthSession> {
-  const value = await AsyncStorage.getItem(AUTH_ACCOUNT_KEY);
+export async function login(
+  input: LoginInput
+): Promise<AuthSession> {
+  const account = await getAuthAccount();
 
-  if (!value) {
+  if (!account) {
     throw new Error("Admin account configured nahi hai.");
   }
 
-  const account = JSON.parse(value) as StoredAuthAccount;
   const email = normalizeEmail(input.email);
   const password = input.password.trim();
 
@@ -90,7 +117,10 @@ export async function login(input: LoginInput): Promise<AuthSession> {
     throw new Error("Ye account inactive hai.");
   }
 
-  if (account.email !== email || account.password !== password) {
+  if (
+    normalizeEmail(account.email) !== email ||
+    account.password !== password
+  ) {
     throw new Error("Email ya password sahi nahi hai.");
   }
 
@@ -99,16 +129,24 @@ export async function login(input: LoginInput): Promise<AuthSession> {
     signedInAt: new Date().toISOString(),
   };
 
-  await AsyncStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(session));
+  await AsyncStorage.setItem(
+    AUTH_SESSION_KEY,
+    JSON.stringify(session)
+  );
+
   return session;
 }
 
 export async function getAuthSession(): Promise<AuthSession | null> {
   try {
     const value = await AsyncStorage.getItem(AUTH_SESSION_KEY);
-    if (!value) return null;
+
+    if (!value) {
+      return null;
+    }
 
     const session = JSON.parse(value) as AuthSession;
+
     if (!session.user?.id || !session.user.isActive) {
       await AsyncStorage.removeItem(AUTH_SESSION_KEY);
       return null;

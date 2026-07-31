@@ -19,7 +19,7 @@ import { useAuth } from "../../context/AuthContext";
 export default function LoginScreen() {
   const router = useRouter();
   const { session, loading: authLoading, configured, signIn } = useAuth();
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState("admin@jmks.in");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 

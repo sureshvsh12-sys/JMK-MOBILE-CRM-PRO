@@ -1,4 +1,10 @@
-import { supabase } from "./supabase";
+import { isSupabaseConfigured, supabase } from "./supabase";
+import {
+  cacheLeads,
+  getCachedLeads,
+  removeCachedLead,
+  upsertCachedLead,
+} from "../storage/leadStorage";
 import type {
   Lead,
   LeadInput,
@@ -117,77 +123,230 @@ function toPayload(input: LeadInput) {
   };
 }
 
+function filterCachedLeads(
+  leads: Lead[],
+  options?: {
+    segment?: LeadSegment | "all";
+    stage?: LeadStage | "all";
+    search?: string;
+    limit?: number;
+  }
+): Lead[] {
+  const search = options?.search?.trim().toLowerCase();
+  return leads
+    .filter((lead) => {
+      if (options?.segment && options.segment !== "all" && lead.segment !== options.segment) return false;
+      if (options?.stage && options.stage !== "all" && lead.stage !== options.stage) return false;
+      if (!search) return true;
+      return [lead.customer, lead.mobile, lead.property, lead.location, lead.source].some((value) =>
+        String(value ?? "").toLowerCase().includes(search)
+      );
+    })
+    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+    .slice(0, options?.limit ?? 500);
+}
+
+function createOfflineLead(input: LeadInput): Lead {
+  const now = new Date().toISOString();
+  const priority = normalizePriority(input.priority);
+  const stage = normalizeStage(input.stage);
+  return {
+    ...input,
+    id: `local-lead-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    customerId: null,
+    mobile: input.mobile.replace(/\D/g, ""),
+    email: input.email.trim().toLowerCase(),
+    stage,
+    priority,
+    temperature: deriveTemperature(priority, stage),
+    rawContactId: null,
+    convertedAt: null,
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
 export async function fetchLeads(options?: {
   segment?: LeadSegment | "all";
   stage?: LeadStage | "all";
   search?: string;
   limit?: number;
 }): Promise<Lead[]> {
-  let query = supabase
-    .from("leads")
-    .select(LEAD_COLUMNS)
-    .order("updated_at", { ascending: false })
-    .limit(options?.limit ?? 500);
-
-  if (options?.segment && options.segment !== "all") query = query.eq("segment", options.segment);
-  if (options?.stage && options.stage !== "all") query = query.eq("stage", options.stage);
-
-  const search = options?.search?.trim().replace(/[%_,()]/g, " ");
-  if (search) {
-    query = query.or(
-      `customer.ilike.%${search}%,mobile.ilike.%${search}%,property.ilike.%${search}%,location.ilike.%${search}%`
-    );
+  if (!isSupabaseConfigured) {
+    return filterCachedLeads(await getCachedLeads(), options);
   }
 
-  const { data, error } = await query;
-  if (error) throw error;
-  return (data ?? []).map((row) => mapLead(row as LeadRow));
+  try {
+    let query = supabase
+      .from("leads")
+      .select(LEAD_COLUMNS)
+      .order("updated_at", { ascending: false })
+      .limit(options?.limit ?? 500);
+
+    if (options?.segment && options.segment !== "all") query = query.eq("segment", options.segment);
+    if (options?.stage && options.stage !== "all") query = query.eq("stage", options.stage);
+
+    const search = options?.search?.trim().replace(/[%_,()]/g, " ");
+    if (search) {
+      query = query.or(
+        `customer.ilike.%${search}%,mobile.ilike.%${search}%,property.ilike.%${search}%,location.ilike.%${search}%`
+      );
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    const cloudLeads = (data ?? []).map((row) => mapLead(row as LeadRow));
+    const cached = await getCachedLeads();
+    const pendingLocal = cached.filter((item) => item.id.startsWith("local-lead-"));
+    const merged = [...pendingLocal, ...cloudLeads.filter((item) => !pendingLocal.some((local) => local.id === item.id))];
+    await cacheLeads(merged);
+    return filterCachedLeads(merged, options);
+  } catch (error) {
+    const cached = filterCachedLeads(await getCachedLeads(), options);
+    if (cached.length > 0) return cached;
+    throw error;
+  }
 }
 
 export async function fetchLeadById(id: string): Promise<Lead> {
-  const { data, error } = await supabase.from("leads").select(LEAD_COLUMNS).eq("id", id).single();
-  if (error) throw error;
-  return mapLead(data as LeadRow);
+  const cached = (await getCachedLeads()).find((item) => item.id === id);
+  if (!isSupabaseConfigured || id.startsWith("local-lead-")) {
+    if (!cached) throw new Error("Lead offline cache me nahi mila.");
+    return cached;
+  }
+
+  try {
+    const { data, error } = await supabase.from("leads").select(LEAD_COLUMNS).eq("id", id).single();
+    if (error) throw error;
+    const lead = mapLead(data as LeadRow);
+    await upsertCachedLead(lead);
+    return lead;
+  } catch (error) {
+    if (cached) return cached;
+    throw error;
+  }
 }
 
 export async function createLead(input: LeadInput): Promise<Lead> {
-  const { data, error } = await supabase
-    .from("leads")
-    .insert({ ...toPayload(input), created_at: new Date().toISOString() })
-    .select(LEAD_COLUMNS)
-    .single();
-  if (error) throw error;
-  return mapLead(data as LeadRow);
+  if (!isSupabaseConfigured) {
+    const localLead = createOfflineLead(input);
+    await upsertCachedLead(localLead);
+    return localLead;
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("leads")
+      .insert({ ...toPayload(input), created_at: new Date().toISOString() })
+      .select(LEAD_COLUMNS)
+      .single();
+    if (error) throw error;
+    const lead = mapLead(data as LeadRow);
+    await upsertCachedLead(lead);
+    return lead;
+  } catch {
+    const localLead = createOfflineLead(input);
+    await upsertCachedLead(localLead);
+    return localLead;
+  }
 }
 
 export async function updateLead(id: string, input: LeadInput): Promise<Lead> {
-  const { data, error } = await supabase
-    .from("leads")
-    .update(toPayload(input))
-    .eq("id", id)
-    .select(LEAD_COLUMNS)
-    .single();
-  if (error) throw error;
-  return mapLead(data as LeadRow);
+  const cached = (await getCachedLeads()).find((item) => item.id === id);
+  if (!isSupabaseConfigured || id.startsWith("local-lead-")) {
+    if (!cached) throw new Error("Lead offline cache me nahi mila.");
+    const priority = normalizePriority(input.priority);
+    const stage = normalizeStage(input.stage);
+    const updated: Lead = {
+      ...cached,
+      ...input,
+      mobile: input.mobile.replace(/\D/g, ""),
+      email: input.email.trim().toLowerCase(),
+      stage,
+      priority,
+      temperature: deriveTemperature(priority, stage),
+      updatedAt: new Date().toISOString(),
+    };
+    await upsertCachedLead(updated);
+    return updated;
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("leads")
+      .update(toPayload(input))
+      .eq("id", id)
+      .select(LEAD_COLUMNS)
+      .single();
+    if (error) throw error;
+    const updated = mapLead(data as LeadRow);
+    await upsertCachedLead(updated);
+    return updated;
+  } catch (error) {
+    if (!cached) throw error;
+    const priority = normalizePriority(input.priority);
+    const stage = normalizeStage(input.stage);
+    const updated: Lead = { ...cached, ...input, stage, priority, temperature: deriveTemperature(priority, stage), updatedAt: new Date().toISOString() };
+    await upsertCachedLead(updated);
+    return updated;
+  }
 }
 
 export async function updateLeadStage(id: string, stage: LeadStage): Promise<Lead> {
-  const { data, error } = await supabase
-    .from("leads")
-    .update({ stage, stage_updated_at: new Date().toISOString(), updated_at: new Date().toISOString() })
-    .eq("id", id)
-    .select(LEAD_COLUMNS)
-    .single();
-  if (error) throw error;
-  return mapLead(data as LeadRow);
+  const cached = (await getCachedLeads()).find((item) => item.id === id);
+  if (!isSupabaseConfigured || id.startsWith("local-lead-")) {
+    if (!cached) throw new Error("Lead offline cache me nahi mila.");
+    const updated: Lead = {
+      ...cached,
+      stage,
+      temperature: deriveTemperature(cached.priority, stage),
+      updatedAt: new Date().toISOString(),
+    };
+    await upsertCachedLead(updated);
+    return updated;
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("leads")
+      .update({ stage, stage_updated_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+      .eq("id", id)
+      .select(LEAD_COLUMNS)
+      .single();
+    if (error) throw error;
+    const updated = mapLead(data as LeadRow);
+    await upsertCachedLead(updated);
+    return updated;
+  } catch (error) {
+    if (!cached) throw error;
+    const updated: Lead = { ...cached, stage, temperature: deriveTemperature(cached.priority, stage), updatedAt: new Date().toISOString() };
+    await upsertCachedLead(updated);
+    return updated;
+  }
 }
 
 export async function deleteLead(id: string): Promise<void> {
-  const { error } = await supabase.from("leads").delete().eq("id", id);
-  if (error) throw error;
+  if (!isSupabaseConfigured || id.startsWith("local-lead-")) {
+    await removeCachedLead(id);
+    return;
+  }
+
+  try {
+    const { error } = await supabase.from("leads").delete().eq("id", id);
+    if (error) throw error;
+    await removeCachedLead(id);
+  } catch (error) {
+    const cached = (await getCachedLeads()).some((item) => item.id === id);
+    if (!cached) throw error;
+    await removeCachedLead(id);
+  }
 }
 
 export async function convertLeadToCustomer(id: string): Promise<string> {
+  if (!isSupabaseConfigured || id.startsWith("local-lead-")) {
+    throw new Error("Customer conversion ke liye Supabase connection required hai.");
+  }
   const lead = await fetchLeadById(id);
   if (lead.customerId) return lead.customerId;
   if (lead.stage !== "Completed") {

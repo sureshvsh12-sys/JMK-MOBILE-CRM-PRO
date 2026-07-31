@@ -22,7 +22,7 @@ import {
   fetchRawContacts,
   updateRawContact,
 } from "../../services/rawContactsService";
-import { supabase } from "../../services/supabase";
+import { subscribeToCrmRealtime } from "../../services/realtimeService";
 import type {
   RawContact,
   RawContactCallStatus,
@@ -95,20 +95,13 @@ export default function RawContactListScreen() {
     void loadContacts();
   }, [loadContacts]));
 
-  useEffect(() => {
-    const channel = supabase
-      .channel("mobile-raw-contacts")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "raw_contacts" },
-        () => void loadContacts(true)
-      )
-      .subscribe();
-
-    return () => {
-      void supabase.removeChannel(channel);
-    };
-  }, [loadContacts]);
+  useEffect(() =>
+    subscribeToCrmRealtime((change) => {
+      if (change.table === "raw_contacts") {
+        void loadContacts(true);
+      }
+    }),
+  [loadContacts]);
 
   const filteredContacts = useMemo(() => {
     const term = search.trim().toLowerCase();

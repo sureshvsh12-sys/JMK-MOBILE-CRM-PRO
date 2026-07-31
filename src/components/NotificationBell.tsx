@@ -1,6 +1,11 @@
+import { useCallback, useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { COLORS, RADIUS } from "../constants/theme";
+import {
+  getUnreadNotificationCount,
+  subscribeToNotificationChanges,
+} from "../storage/notificationStorage";
 
 type NotificationBellProps = {
   count?: number;
@@ -8,12 +13,26 @@ type NotificationBellProps = {
 };
 
 export default function NotificationBell({
-  count = 0,
+  count,
   onPress,
 }: NotificationBellProps) {
-  const safeCount = Number.isFinite(count)
-    ? Math.max(0, Math.floor(count))
+  const [storedCount, setStoredCount] = useState(0);
+
+  const loadCount = useCallback(async () => {
+    setStoredCount(await getUnreadNotificationCount());
+  }, []);
+
+  useEffect(() => {
+    void loadCount();
+    return subscribeToNotificationChanges(() => {
+      void loadCount();
+    });
+  }, [loadCount]);
+
+  const requestedCount = Number.isFinite(count)
+    ? Math.max(0, Math.floor(count ?? 0))
     : 0;
+  const safeCount = Math.max(requestedCount, storedCount);
 
   return (
     <Pressable

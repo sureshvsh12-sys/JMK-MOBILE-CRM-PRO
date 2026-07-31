@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback } from "react";
 import {
   Alert,
   BackHandler,
@@ -16,13 +16,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import AppHeader from "../../components/AppHeader";
 import { BottomTabInset, COLORS, RADIUS, SHADOW, SPACING } from "../../constants/theme";
-import {
-  deleteFollowUp,
-  type FollowUp,
-  type FollowUpStatus,
-  getFollowUps,
-  setFollowUpStatus,
-} from "../../storage/followUpStorage";
+import { useFollowups } from "../../hooks/useFollowups";
+import type { FollowUp, FollowUpStatus } from "../../services/followupsService";
 
 const FILTERS: Array<"All" | FollowUpStatus> = [
   "All",
@@ -32,54 +27,29 @@ const FILTERS: Array<"All" | FollowUpStatus> = [
 ];
 
 export default function FollowUpListScreen() {
-  const [items, setItems] = useState<FollowUp[]>([]);
-  const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<(typeof FILTERS)[number]>("All");
-  const [refreshing, setRefreshing] = useState(false);
-
-  const load = useCallback(async () => {
-    const nextItems = await getFollowUps();
-    setItems(nextItems);
-  }, []);
+  const {
+    items,
+    filtered,
+    search,
+    setSearch,
+    filter,
+    setFilter,
+    isRefreshing,
+    refresh,
+    updateStatus,
+    remove: removeFollowUp,
+  } = useFollowups();
 
   useFocusEffect(
     useCallback(() => {
-      void load();
-
       const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
         router.replace("/dashboard");
         return true;
       });
 
       return () => subscription.remove();
-    }, [load])
+    }, [])
   );
-
-  const filtered = useMemo(() => {
-    const query = search.trim().toLowerCase();
-
-    return items
-      .filter((item) => filter === "All" || item.status === filter)
-      .filter((item) => {
-        if (!query) return true;
-        return [
-          item.customerName,
-          item.mobile,
-          item.subject,
-          item.mode,
-          item.priority,
-          item.notes,
-        ]
-          .join(" ")
-          .toLowerCase()
-          .includes(query);
-      })
-      .sort((a, b) => {
-        if (a.status === "Pending" && b.status !== "Pending") return -1;
-        if (a.status !== "Pending" && b.status === "Pending") return 1;
-        return new Date(a.dueAt).getTime() - new Date(b.dueAt).getTime();
-      });
-  }, [filter, items, search]);
 
   const now = Date.now();
   const todayKey = getLocalDateKey(new Date());
@@ -109,8 +79,7 @@ export default function FollowUpListScreen() {
           text: "Delete",
           style: "destructive",
           onPress: async () => {
-            await deleteFollowUp(item.id);
-            await load();
+            await removeFollowUp(item.id);
           },
         },
       ]
@@ -225,14 +194,10 @@ export default function FollowUpListScreen() {
           contentContainerStyle={[styles.list, filtered.length === 0 && styles.emptyList]}
           refreshControl={
             <RefreshControl
-              refreshing={refreshing}
+              refreshing={isRefreshing}
               tintColor={COLORS.primary}
               colors={[COLORS.primary]}
-              onRefresh={async () => {
-                setRefreshing(true);
-                await load();
-                setRefreshing(false);
-              }}
+              onRefresh={() => void refresh()}
             />
           }
           ListEmptyComponent={
@@ -307,8 +272,7 @@ export default function FollowUpListScreen() {
                       icon="✓"
                       emphasis
                       onPress={async () => {
-                        await setFollowUpStatus(item.id, "Completed");
-                        await load();
+                        await updateStatus(item.id, "Completed");
                       }}
                     />
                   ) : null}

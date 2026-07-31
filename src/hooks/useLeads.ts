@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Lead, LeadSegment, LeadStage } from "../types/lead";
 import { fetchLeads } from "../services/leadsService";
-import { supabase } from "../services/supabase";
+import { isSupabaseConfigured, supabase } from "../services/supabase";
 
 export function useLeads(filters?: {
   segment?: LeadSegment | "all";
@@ -33,6 +33,8 @@ export function useLeads(filters?: {
   }, [load]);
 
   useEffect(() => {
+    if (!isSupabaseConfigured) return;
+
     const channel = supabase
       .channel("mobile-leads-live")
       .on("postgres_changes", { event: "*", schema: "public", table: "leads" }, () => void load())

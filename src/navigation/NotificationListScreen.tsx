@@ -30,6 +30,7 @@ const FILTERS: NotificationFilter[] = [
   "Bookings",
   "Finance",
   "Solar",
+  "Raw Contacts",
   "System",
 ];
 

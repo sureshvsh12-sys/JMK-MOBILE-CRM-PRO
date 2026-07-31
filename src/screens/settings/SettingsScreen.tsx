@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { ComponentProps, PropsWithChildren } from "react";
 import {
   Alert,
@@ -48,11 +48,16 @@ export default function SettingsScreen() {
   );
   const [backupText, setBackupText] = useState("");
   const [saving, setSaving] = useState(false);
-  const { config: syncConfig, queueCount, syncing, saveConfig: saveSyncConfig, runSync } = useSync();
+  const [syncDraft, setSyncDraft] = useState({ apiBaseUrl: "", autoSyncEnabled: false, lastSyncAt: "" });
+  const { config: syncConfig, queueCount, syncing, saveConfig: saveSyncConfig, runSync, refresh: refreshSync } = useSync();
 
   const loadSettings = useCallback(async () => {
     setSettings(await getSettings());
   }, []);
+
+  useEffect(() => {
+    if (syncConfig) setSyncDraft(syncConfig);
+  }, [syncConfig]);
 
   useFocusEffect(
     useCallback(() => {
@@ -143,14 +148,19 @@ export default function SettingsScreen() {
 
 
   const handleSaveSync = async () => {
-    if (!syncConfig) return;
-    const apiBaseUrl = syncConfig.apiBaseUrl.trim().replace(/\/$/, "");
+    const apiBaseUrl = syncDraft.apiBaseUrl.trim().replace(/\/$/, "");
     if (apiBaseUrl && !/^https?:\/\//i.test(apiBaseUrl)) {
       Alert.alert("Invalid API URL", "URL http:// ya https:// se start honi chahiye.");
       return;
     }
-    await saveSyncConfig({ ...syncConfig, apiBaseUrl });
-    Alert.alert("Saved", "Sync settings save ho gayi.");
+    try {
+      const normalized = { ...syncDraft, apiBaseUrl };
+      await saveSyncConfig(normalized);
+      setSyncDraft(normalized);
+      Alert.alert("Saved", "Sync settings save ho gayi.");
+    } catch {
+      Alert.alert("Error", "Sync settings save nahi ho saki.");
+    }
   };
 
   const handleSyncNow = async () => {
@@ -253,7 +263,7 @@ export default function SettingsScreen() {
           onPress: async () => {
             await clearAllCrmData();
             setBackupText("");
-            await loadSettings();
+            await Promise.all([loadSettings(), refreshSync()]);
 
             Alert.alert(
               "Data Cleared",
@@ -443,19 +453,19 @@ export default function SettingsScreen() {
 
           <Field
             label="API Base URL"
-            value={syncConfig?.apiBaseUrl || ""}
+            value={syncDraft.apiBaseUrl}
             keyboardType="default"
             onChangeText={(value) =>
-              syncConfig && void saveSyncConfig({ ...syncConfig, apiBaseUrl: value })
+              setSyncDraft((current) => ({ ...current, apiBaseUrl: value }))
             }
           />
 
           <SettingSwitch
             label="Automatic Sync"
             description="App open hone par pending data sync karne ki setting."
-            value={syncConfig?.autoSyncEnabled || false}
+            value={syncDraft.autoSyncEnabled}
             onValueChange={(value) =>
-              syncConfig && void saveSyncConfig({ ...syncConfig, autoSyncEnabled: value })
+              setSyncDraft((current) => ({ ...current, autoSyncEnabled: value }))
             }
           />
 

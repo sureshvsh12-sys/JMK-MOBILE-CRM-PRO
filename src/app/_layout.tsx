@@ -2,6 +2,7 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 
 import AppErrorBoundary from "../components/AppErrorBoundary";
+import SyncLifecycle from "../components/SyncLifecycle";
 import { COLORS } from "../constants/theme";
 import { AuthProvider } from "../context/AuthContext";
 
@@ -9,6 +10,7 @@ export default function RootLayout() {
   return (
     <AppErrorBoundary>
       <AuthProvider>
+        <SyncLifecycle />
         <StatusBar style="light" backgroundColor="#06111F" />
         <Stack
           screenOptions={{
@@ -23,6 +25,7 @@ export default function RootLayout() {
           <Stack.Screen name="index" options={{ animation: "fade" }} />
           <Stack.Screen name="login" options={{ animation: "fade", gestureEnabled: false }} />
           <Stack.Screen name="dashboard" options={{ animation: "fade" }} />
+          <Stack.Screen name="raw-contacts" />
           <Stack.Screen name="leads" />
           <Stack.Screen name="lead-form" />
           <Stack.Screen name="customers" />

@@ -164,7 +164,7 @@ export default function Customer360Screen() {
           <View style={styles.statCard}><Text style={styles.statValue}>{summary.followUps}</Text><Text style={styles.statLabel}>Follow-ups</Text></View>
           <View style={styles.statCard}><Text style={styles.statValue}>{summary.quotations}</Text><Text style={styles.statLabel}>Quotations</Text></View>
           <View style={styles.statCard}><Text style={styles.statValue}>{summary.payments}</Text><Text style={styles.statLabel}>Payments</Text></View>
-          <View style={styles.statCard}><Text style={styles.statValue}>{summary.calls + activities.filter((item) => item.type === "call").length}</Text><Text style={styles.statLabel}>Calls</Text></View>
+          <View style={styles.statCard}><Text style={styles.statValue}>{summary.calls}</Text><Text style={styles.statLabel}>Calls</Text></View>
         </View>
 
         <View style={styles.linkedCard}>

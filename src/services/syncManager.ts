@@ -1,10 +1,16 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { postJson } from "./apiClient";
-import { enqueueSync, getSyncConfig, getSyncQueue, replaceSyncQueue, saveSyncConfig } from "../storage/syncStorage";
+import {
+  getSyncConfig,
+  getSyncQueue,
+  replaceSyncQueue,
+  saveSyncConfig,
+} from "../storage/syncStorage";
 import type { SyncEntity, SyncQueueItem, SyncResult } from "../types/sync";
 
 const ENTITY_KEYS: Record<SyncEntity, string> = {
+  rawContacts: "jmk_mobile_raw_contacts",
   customers: "jmk_mobile_customers",
   leads: "jmk_mobile_leads",
   followups: "jmk_mobile_followups",
@@ -44,38 +50,67 @@ function createQueueItem(payload: Record<SyncEntity, unknown[]>): SyncQueueItem 
   };
 }
 
+async function sendBatch(apiBaseUrl: string, batch: SyncQueueItem): Promise<void> {
+  await postJson(apiBaseUrl, "/api/mobile/sync", {
+    app: "JMK Mobile CRM PRO Enterprise",
+    deviceSyncedAt: new Date().toISOString(),
+    batchId: batch.id,
+    attempt: batch.attempts + 1,
+    data: batch.payload,
+  });
+}
+
 export async function syncNow(): Promise<SyncResult> {
   const config = await getSyncConfig();
-  const payload = await collectPayload();
+  const apiBaseUrl = config.apiBaseUrl.trim().replace(/\/$/, "");
 
-  if (!config.apiBaseUrl.trim()) {
+  if (!apiBaseUrl) {
     return { success: false, queued: false, message: "API URL configure nahi hai." };
   }
 
-  try {
-    const queued = await getSyncQueue();
-    const batches = [...queued, createQueueItem(payload)];
+  const queued = await getSyncQueue();
+  const currentBatch = createQueueItem(await collectPayload());
+  const batches = [...queued, currentBatch];
+  const failedBatches: SyncQueueItem[] = [];
+  let successfulBatches = 0;
+  let firstError = "";
 
-    for (const batch of batches) {
-      await postJson(config.apiBaseUrl, "/api/mobile/sync", {
-        app: "JMK Mobile CRM PRO Enterprise",
-        deviceSyncedAt: new Date().toISOString(),
-        batchId: batch.id,
-        data: batch.payload,
-      });
+  for (const batch of batches) {
+    try {
+      await sendBatch(apiBaseUrl, batch);
+      successfulBatches += 1;
+    } catch (error) {
+      if (!firstError) {
+        firstError = error instanceof Error ? error.message : "Sync request fail hua";
+      }
+      failedBatches.push({ ...batch, attempts: batch.attempts + 1 });
     }
+  }
 
-    await replaceSyncQueue([]);
+  await replaceSyncQueue(failedBatches);
+
+  if (failedBatches.length === 0) {
     const syncedAt = new Date().toISOString();
-    await saveSyncConfig({ ...config, lastSyncAt: syncedAt });
+    await saveSyncConfig({ ...config, apiBaseUrl, lastSyncAt: syncedAt });
+    return {
+      success: true,
+      queued: false,
+      message: `${successfulBatches} sync batch successfully complete hue.`,
+      syncedAt,
+    };
+  }
 
-    return { success: true, queued: false, message: "CRM data successfully sync ho gaya.", syncedAt };
-  } catch (error) {
-    await enqueueSync(createQueueItem(payload));
+  if (successfulBatches > 0) {
     return {
       success: false,
       queued: true,
-      message: error instanceof Error ? `${error.message}. Data offline queue me save hai.` : "Sync fail hua. Data offline queue me save hai.",
+      message: `${successfulBatches} batch sync hue aur ${failedBatches.length} pending queue me safe hain.`,
     };
   }
+
+  return {
+    success: false,
+    queued: true,
+    message: `${firstError}. ${failedBatches.length} batch offline queue me safe hain.`,
+  };
 }

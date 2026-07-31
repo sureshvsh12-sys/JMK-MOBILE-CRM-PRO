@@ -27,6 +27,7 @@ const DEFAULT_SETTINGS: AppSettings = {
 const CRM_KEYS = [
   "jmk_mobile_settings",
   "jmk_mobile_notifications",
+  "jmk_mobile_raw_contacts",
   "jmk_mobile_customers",
   "jmk_mobile_customer_activities",
   "jmk_mobile_customer_documents",
@@ -39,6 +40,8 @@ const CRM_KEYS = [
   "jmk_mobile_solar",
   "jmk_mobile_employees",
   "jmk_mobile_inventory",
+  "jmk_mobile_sync_config",
+  "jmk_mobile_sync_queue",
 ];
 
 export async function getSettings(): Promise<AppSettings> {
@@ -107,10 +110,15 @@ export async function restoreBackup(
 ): Promise<void> {
   const parsed = JSON.parse(backupText) as {
     app?: string;
+    version?: number;
     data?: Record<string, unknown>;
   };
 
-  if (!parsed.data || typeof parsed.data !== "object") {
+  if (parsed.app && parsed.app !== "JMK Mobile CRM PRO Enterprise") {
+    throw new Error("Ye JMK Mobile CRM backup nahi hai");
+  }
+
+  if (!parsed.data || typeof parsed.data !== "object" || Array.isArray(parsed.data)) {
     throw new Error("Invalid backup file");
   }
 
