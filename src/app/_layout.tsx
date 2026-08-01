@@ -4,26 +4,29 @@ import { StatusBar } from "expo-status-bar";
 import AppErrorBoundary from "../components/AppErrorBoundary";
 import ForegroundNotificationPopup from "../components/ForegroundNotificationPopup";
 import SyncLifecycle from "../components/SyncLifecycle";
-import { COLORS } from "../constants/theme";
 import { AuthProvider } from "../context/AuthContext";
-import { ThemeProvider } from "../context/ThemeContext";
+import { ThemeProvider, useAppTheme } from "../context/ThemeContext";
 
-export default function RootLayout() {
+function AppNavigator() {
+  const { palette, resolvedTheme } = useAppTheme();
+
   return (
-    <ThemeProvider>
       <AppErrorBoundary>
         <AuthProvider>
           <SyncLifecycle />
           <ForegroundNotificationPopup />
 
-          <StatusBar style="light" backgroundColor="#06111F" />
+          <StatusBar
+            style={resolvedTheme === "dark" ? "light" : "dark"}
+            backgroundColor={palette.header}
+          />
 
           <Stack
             screenOptions={{
               animation: "slide_from_right",
               animationDuration: 220,
               contentStyle: {
-                backgroundColor: COLORS.background,
+                backgroundColor: palette.background,
               },
               headerShown: false,
               gestureEnabled: true,
@@ -36,6 +39,8 @@ export default function RootLayout() {
                 animation: "fade",
               }}
             />
+
+            <Stack.Screen name="reset-password" options={{ animation: "fade" }} />
 
             <Stack.Screen
               name="login"
@@ -87,6 +92,13 @@ export default function RootLayout() {
           </Stack>
         </AuthProvider>
       </AppErrorBoundary>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <ThemeProvider>
+      <AppNavigator />
     </ThemeProvider>
   );
 }

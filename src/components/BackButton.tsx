@@ -2,7 +2,7 @@ import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { RADIUS, SHADOW, SPACING } from "../constants/theme";
-import { useTheme } from "../hooks/use-theme";
+import { useAppTheme } from "../context/ThemeContext";
 
 type BackButtonProps = {
   label?: string;
@@ -18,7 +18,7 @@ export default function BackButton({
   compact = false,
 }: BackButtonProps) {
   const router = useRouter();
-  const palette = useTheme();
+  const { palette } = useAppTheme();
 
   function handlePress() {
     if (onPress) {
@@ -44,8 +44,8 @@ export default function BackButton({
         styles.button,
         compact && styles.compactButton,
         {
-          backgroundColor: palette.backgroundElement,
-          borderColor: palette.backgroundSelected,
+          backgroundColor: palette.surface,
+          borderColor: palette.border,
         },
         pressed && styles.pressed,
       ]}
@@ -54,7 +54,7 @@ export default function BackButton({
         style={[
           styles.iconContainer,
           compact && styles.compactIconContainer,
-          { backgroundColor: palette.backgroundSelected },
+          { backgroundColor: palette.primarySoft },
         ]}
       >
         <Text

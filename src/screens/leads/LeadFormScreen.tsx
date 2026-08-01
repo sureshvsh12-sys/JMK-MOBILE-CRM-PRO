@@ -21,6 +21,7 @@ import {
     useRouter,
 } from "expo-router";
 
+import BackButton from "../../components/BackButton";
 import PrimaryButton from "../../components/PrimaryButton";
 
 import {
@@ -385,14 +386,7 @@ export default function LeadFormScreen() {
       }
     >
       <View style={styles.header}>
-        <Pressable
-          onPress={() => router.back()}
-          style={styles.backButton}
-        >
-          <Text style={styles.backText}>
-            ‹
-          </Text>
-        </Pressable>
+        <BackButton compact fallbackRoute="/leads" />
 
         <View style={styles.headerContent}>
           <Text style={styles.headerTitle}>

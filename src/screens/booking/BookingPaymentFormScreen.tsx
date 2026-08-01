@@ -14,6 +14,7 @@ import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import AppHeader from "../../components/AppHeader";
+import BackButton from "../../components/BackButton";
 import { COLORS, RADIUS, SPACING } from "../../constants/theme";
 import { Booking, getBookingById } from "../../storage/bookingStorage";
 import {
@@ -82,9 +83,7 @@ export default function BookingPaymentFormScreen() {
         style={styles.flex}
         behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-          <Pressable onPress={() => router.back()}>
-            <Text style={styles.backText}>‹ Back to payments</Text>
-          </Pressable>
+          <BackButton label="Payments" fallbackRoute="/bookings" />
 
           <View style={styles.bookingCard}>
             <Text style={styles.customerName}>{booking?.customerName || "Loading booking..."}</Text>

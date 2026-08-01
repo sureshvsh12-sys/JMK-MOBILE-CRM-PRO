@@ -16,6 +16,7 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import AppHeader from "../../components/AppHeader";
+import BackButton from "../../components/BackButton";
 import SystemHealthCard from "../../components/settings/SystemHealthCard";
 import {
   COLORS,
@@ -374,18 +375,7 @@ export default function SettingsScreen() {
       />
 
       <View style={styles.navigationRow}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-          style={({ pressed }) => [
-            styles.navigationButton,
-            pressed && styles.navigationButtonPressed,
-          ]}
-          onPress={goBack}
-        >
-          <Text style={styles.navigationIcon}>‹</Text>
-          <Text style={styles.navigationText}>Back</Text>
-        </Pressable>
+        <BackButton onPress={goBack} compact />
 
         <Pressable
           accessibilityRole="button"

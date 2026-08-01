@@ -1,7 +1,7 @@
 import { useRouter, type Href } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { COLORS, RADIUS, SPACING } from "../constants/theme";
+import { RADIUS, SHADOW, SPACING } from "../constants/theme";
 
 type HomeAction = {
   title: string;
@@ -9,6 +9,7 @@ type HomeAction = {
   icon: string;
   route: Href;
   accentColor: string;
+  softColor: string;
 };
 
 const ACTIONS: readonly HomeAction[] = [
@@ -17,21 +18,24 @@ const ACTIONS: readonly HomeAction[] = [
     subtitle: "Find every CRM record",
     icon: "⌕",
     route: "/search",
-    accentColor: "#60A5FA",
+    accentColor: "#2563EB",
+    softColor: "#EFF6FF",
   },
   {
     title: "Team",
     subtitle: "Employees and access",
     icon: "♟",
     route: "/employees",
-    accentColor: "#A78BFA",
+    accentColor: "#7C3AED",
+    softColor: "#F5F3FF",
   },
   {
     title: "Reports",
     subtitle: "Business performance",
     icon: "▥",
     route: "/reports",
-    accentColor: "#34D399",
+    accentColor: "#059669",
+    softColor: "#ECFDF5",
   },
   {
     title: "Alerts",
@@ -39,13 +43,15 @@ const ACTIONS: readonly HomeAction[] = [
     icon: "◈",
     route: "/notifications",
     accentColor: "#F59E0B",
+    softColor: "#FFFBEB",
   },
   {
     title: "Settings",
     subtitle: "CRM preferences",
     icon: "⚙",
     route: "/settings",
-    accentColor: "#94A3B8",
+    accentColor: "#0EA5E9",
+    softColor: "#F0F9FF",
   },
 ];
 
@@ -60,20 +66,27 @@ export default function HomeQuickActions() {
           accessibilityRole="button"
           key={action.title}
           onPress={() => router.push(action.route)}
-          style={({ pressed }) => [styles.action, pressed && styles.pressed]}
+          style={({ pressed }) => [
+            styles.action,
+            {
+              backgroundColor: action.softColor,
+              borderColor: `${action.accentColor}3D`,
+            },
+            pressed && styles.pressed,
+          ]}
         >
+          <View style={[styles.accentBar, { backgroundColor: action.accentColor }]} />
+
           <View
             style={[
               styles.iconContainer,
               {
-                backgroundColor: `${action.accentColor}1D`,
-                borderColor: `${action.accentColor}45`,
+                backgroundColor: action.accentColor,
+                shadowColor: action.accentColor,
               },
             ]}
           >
-            <Text style={[styles.icon, { color: action.accentColor }]}>
-              {action.icon}
-            </Text>
+            <Text style={styles.icon}>{action.icon}</Text>
           </View>
 
           <View style={styles.copy}>
@@ -85,7 +98,17 @@ export default function HomeQuickActions() {
             </Text>
           </View>
 
-          <Text style={[styles.chevron, { color: action.accentColor }]}>›</Text>
+          <View
+            style={[
+              styles.chevronCircle,
+              {
+                backgroundColor: action.accentColor,
+                shadowColor: action.accentColor,
+              },
+            ]}
+          >
+            <Text style={styles.chevron}>›</Text>
+          </View>
         </Pressable>
       ))}
     </View>
@@ -99,29 +122,41 @@ const styles = StyleSheet.create({
     gap: SPACING.md,
   },
   action: {
+    position: "relative",
     minWidth: 156,
     flexGrow: 1,
     flexBasis: "46%",
-    minHeight: 88,
+    minHeight: 92,
     flexDirection: "row",
     alignItems: "center",
     padding: SPACING.md,
     overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "rgba(148,163,184,0.18)",
+    borderWidth: 1.5,
     borderRadius: RADIUS.lg,
-    backgroundColor: "rgba(13,27,45,0.92)",
+    ...SHADOW,
+  },
+  accentBar: {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 5,
   },
   iconContainer: {
-    width: 42,
-    height: 42,
+    width: 46,
+    height: 46,
     alignItems: "center",
     justifyContent: "center",
+    marginLeft: 3,
     marginRight: SPACING.md,
     borderRadius: RADIUS.md,
-    borderWidth: 1,
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.24,
+    shadowRadius: 8,
+    elevation: 5,
   },
   icon: {
+    color: "#FFFFFF",
     fontSize: 22,
     fontWeight: "900",
   },
@@ -130,23 +165,37 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   title: {
-    color: COLORS.text,
-    fontSize: 13,
+    color: "#102033",
+    fontSize: 13.5,
     fontWeight: "900",
   },
   subtitle: {
     marginTop: 4,
-    color: COLORS.textMuted,
-    fontSize: 10,
+    color: "#61758A",
+    fontSize: 10.5,
     fontWeight: "600",
   },
-  chevron: {
+  chevronCircle: {
+    width: 34,
+    height: 34,
     marginLeft: SPACING.sm,
-    fontSize: 23,
-    fontWeight: "800",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 17,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 7,
+    elevation: 4,
+  },
+  chevron: {
+    marginTop: -2,
+    color: "#FFFFFF",
+    fontSize: 24,
+    lineHeight: 26,
+    fontWeight: "900",
   },
   pressed: {
-    opacity: 0.76,
-    transform: [{ scale: 0.975 }],
+    opacity: 0.86,
+    transform: [{ scale: 0.98 }],
   },
 });

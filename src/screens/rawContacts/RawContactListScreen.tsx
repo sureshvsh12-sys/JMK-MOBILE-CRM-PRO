@@ -17,7 +17,7 @@ import { useFocusEffect, useRouter } from "expo-router";
 import AppHeader from "../../components/AppHeader";
 import EmptyState from "../../components/common/EmptyState";
 import SearchField from "../../components/common/SearchField";
-import { COLORS, RADIUS, SHADOW, SPACING } from "../../constants/theme";
+import { COLORS, RADIUS, SHADOW, SOFT_SHADOW, SPACING } from "../../constants/theme";
 import {
   convertRawContactToLead,
   fetchRawContacts,
@@ -43,11 +43,11 @@ const SEGMENTS: Array<{
   { key: "solar", label: "Solar", color: "#F97316" },
 ];
 
-const QUEUES: Array<{ key: QueueFilter; label: string }> = [
-  { key: "all", label: "All Contacts" },
-  { key: "pending", label: "Call Now" },
-  { key: "callbacks", label: "Callbacks" },
-  { key: "interested", label: "Interested" },
+const QUEUES: Array<{ key: QueueFilter; label: string; color: string; icon: string }> = [
+  { key: "all", label: "All Contacts", color: "#475569", icon: "◎" },
+  { key: "pending", label: "Call Now", color: "#2563EB", icon: "☎" },
+  { key: "callbacks", label: "Callbacks", color: "#7C3AED", icon: "↻" },
+  { key: "interested", label: "Interested", color: "#16A34A", icon: "✓" },
 ];
 
 const STATUSES: Array<{
@@ -55,13 +55,13 @@ const STATUSES: Array<{
   icon: string;
   color: string;
 }> = [
-  { key: "Not Called", icon: "○", color: "#94A3B8" },
+  { key: "Not Called", icon: "○", color: "#2563EB" },
   { key: "No Answer", icon: "↗", color: "#F59E0B" },
   { key: "Busy", icon: "⌛", color: "#F97316" },
-  { key: "Callback", icon: "↻", color: "#3B82F6" },
-  { key: "Interested", icon: "✓", color: "#10B981" },
-  { key: "Not Interested", icon: "−", color: "#EF4444" },
-  { key: "Wrong Number", icon: "!", color: "#A855F7" },
+  { key: "Callback", icon: "↻", color: "#7C3AED" },
+  { key: "Interested", icon: "✓", color: "#16A34A" },
+  { key: "Not Interested", icon: "−", color: "#DC2626" },
+  { key: "Wrong Number", icon: "!", color: "#374151" },
 ];
 
 const STATUS_COLORS: Record<RawContactCallStatus, string> = {
@@ -107,6 +107,11 @@ function isCallbackDue(value: string | null) {
 
 function segmentColor(segment: RawContactSegment) {
   return SEGMENTS.find((item) => item.key === segment)?.color ?? COLORS.primary;
+}
+
+function contactDisplayName(contact: RawContact | null | undefined) {
+  const name = contact?.full_name?.trim();
+  return name || "Raw Contact";
 }
 
 export default function RawContactListScreen() {
@@ -426,21 +431,17 @@ export default function RawContactListScreen() {
                     onPress={() => setSegment(item.key)}
                     style={[
                       styles.filterChip,
-                      active && {
-                        backgroundColor: `${item.color}20`,
-                        borderColor: `${item.color}80`,
+                      {
+                        backgroundColor: item.color,
+                        borderColor: item.color,
                       },
+                      active && styles.filterChipActive,
                     ]}
                   >
                     <View
-                      style={[styles.segmentDot, { backgroundColor: item.color }]}
+                      style={[styles.segmentDot, { backgroundColor: COLORS.white }]}
                     />
-                    <Text
-                      style={[
-                        styles.filterText,
-                        active && { color: item.color },
-                      ]}
-                    >
+                    <Text style={styles.filterText}>
                       {item.label}
                     </Text>
                   </Pressable>
@@ -454,25 +455,26 @@ export default function RawContactListScreen() {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.horizontalFilters}
             >
-              {QUEUES.map((item) => (
-                <Pressable
-                  key={item.key}
-                  onPress={() => setQueue(item.key)}
-                  style={[
-                    styles.queueChip,
-                    queue === item.key && styles.queueChipActive,
-                  ]}
-                >
-                  <Text
+              {QUEUES.map((item) => {
+                const active = queue === item.key;
+                return (
+                  <Pressable
+                    key={item.key}
+                    onPress={() => setQueue(item.key)}
                     style={[
-                      styles.queueText,
-                      queue === item.key && styles.queueTextActive,
+                      styles.queueChip,
+                      {
+                        backgroundColor: item.color,
+                        borderColor: item.color,
+                      },
+                      active && styles.queueChipActive,
                     ]}
                   >
-                    {item.label}
-                  </Text>
-                </Pressable>
-              ))}
+                    <Text style={styles.queueIcon}>{item.icon}</Text>
+                    <Text style={styles.queueText}>{item.label}</Text>
+                  </Pressable>
+                );
+              })}
             </ScrollView>
 
             <SearchField
@@ -550,7 +552,7 @@ export default function RawContactListScreen() {
                 <View
                   style={[
                     styles.statusBadge,
-                    { backgroundColor: `${statusColor}18` },
+                    { backgroundColor: statusColor },
                   ]}
                 >
                   <View
@@ -622,13 +624,13 @@ export default function RawContactListScreen() {
                   ]}
                 >
                   <Text style={[styles.modalAvatarText, { color: selectedAccent }]}>
-                    {(selected?.full_name || "R").trim().charAt(0).toUpperCase()}
+                    {contactDisplayName(selected).charAt(0).toUpperCase()}
                   </Text>
                 </View>
                 <View style={styles.modalHeaderCopy}>
                   <Text style={styles.modalEyebrow}>CALL RESULT</Text>
                   <Text style={styles.modalTitle} numberOfLines={1}>
-                    {selected?.full_name || "Raw Contact"}
+                    {contactDisplayName(selected)}
                   </Text>
                   <Text style={styles.modalMobile}>{selected?.mobile}</Text>
                 </View>
@@ -670,25 +672,20 @@ export default function RawContactListScreen() {
                       onPress={() => setStatus(item.key)}
                       style={[
                         styles.statusOption,
-                        active && {
-                          backgroundColor: `${item.color}1C`,
-                          borderColor: `${item.color}90`,
+                        {
+                          backgroundColor: item.color,
+                          borderColor: item.color,
                         },
+                        active && styles.statusOptionActive,
                       ]}
                     >
                       <Text
-                        style={[
-                          styles.statusOptionIcon,
-                          active && { color: item.color },
-                        ]}
+                        style={styles.statusOptionIcon}
                       >
                         {item.icon}
                       </Text>
                       <Text
-                        style={[
-                          styles.statusOptionText,
-                          active && { color: item.color },
-                        ]}
+                        style={styles.statusOptionText}
                       >
                         {item.key}
                       </Text>
@@ -908,33 +905,40 @@ const styles = StyleSheet.create({
     paddingBottom: SPACING.lg,
   },
   filterChip: {
-    minHeight: 40,
+    minHeight: 42,
     flexDirection: "row",
     alignItems: "center",
     gap: 7,
-    paddingHorizontal: SPACING.md,
-    borderRadius: RADIUS.round,
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  segmentDot: { width: 7, height: 7, borderRadius: 4 },
-  filterText: { color: COLORS.textMuted, fontSize: 12, fontWeight: "800" },
-  queueChip: {
-    minHeight: 39,
-    justifyContent: "center",
     paddingHorizontal: SPACING.lg,
     borderRadius: RADIUS.round,
-    backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    ...SOFT_SHADOW,
+  },
+  filterChipActive: {
+    borderWidth: 2,
+    borderColor: COLORS.white,
+    transform: [{ scale: 1.04 }],
+  },
+  segmentDot: { width: 7, height: 7, borderRadius: 4 },
+  filterText: { color: COLORS.white, fontSize: 12, fontWeight: "900" },
+  queueChip: {
+    minHeight: 42,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 7,
+    paddingHorizontal: SPACING.lg,
+    borderRadius: RADIUS.round,
+    borderWidth: 1,
+    ...SOFT_SHADOW,
   },
   queueChipActive: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
+    borderWidth: 2,
+    borderColor: COLORS.white,
+    transform: [{ scale: 1.04 }],
   },
-  queueText: { color: COLORS.textMuted, fontSize: 11, fontWeight: "800" },
-  queueTextActive: { color: COLORS.white },
+  queueIcon: { color: COLORS.white, fontSize: 13, fontWeight: "900" },
+  queueText: { color: COLORS.white, fontSize: 11, fontWeight: "900" },
   listHeadingRow: {
     marginTop: SPACING.lg,
     marginBottom: SPACING.md,
@@ -942,7 +946,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  listHeading: { color: COLORS.white, fontSize: 17, fontWeight: "900" },
+  listHeading: { color: COLORS.text, fontSize: 17, fontWeight: "900" },
   listCount: { marginTop: 3, color: COLORS.textMuted, fontSize: 10.5 },
   loadingText: {
     marginVertical: SPACING.lg,
@@ -958,7 +962,7 @@ const styles = StyleSheet.create({
     borderColor: "rgba(248,113,113,0.35)",
   },
   errorText: { color: "#FCA5A5", fontSize: 12 },
-  retryText: { marginTop: 4, color: COLORS.white, fontSize: 11, fontWeight: "800" },
+  retryText: { marginTop: 4, color: COLORS.primary, fontSize: 11, fontWeight: "800" },
   card: {
     position: "relative",
     overflow: "hidden",
@@ -979,7 +983,7 @@ const styles = StyleSheet.create({
   },
   avatarText: { fontSize: 18, fontWeight: "900" },
   cardCopy: { flex: 1, minWidth: 0 },
-  name: { color: COLORS.white, fontSize: 16, fontWeight: "900" },
+  name: { color: COLORS.text, fontSize: 16, fontWeight: "900" },
   mobile: { marginTop: 4, color: COLORS.textSoft, fontSize: 13, fontWeight: "700" },
   location: { marginTop: 4, color: COLORS.textMuted, fontSize: 11 },
   statusBadge: {
@@ -992,7 +996,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.round,
   },
   statusDot: { width: 5, height: 5, borderRadius: 3 },
-  statusText: { fontSize: 9, fontWeight: "900" },
+  statusText: { color: COLORS.white, fontSize: 9, fontWeight: "900" },
   remarksPreview: {
     marginTop: SPACING.md,
     padding: SPACING.md,
@@ -1072,7 +1076,7 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     letterSpacing: 1.4,
   },
-  modalTitle: { marginTop: 3, color: COLORS.white, fontSize: 20, fontWeight: "900" },
+  modalTitle: { marginTop: 3, color: COLORS.text, fontSize: 20, fontWeight: "900" },
   modalMobile: { marginTop: 3, color: COLORS.textMuted, fontSize: 12.5 },
   closeButton: {
     width: 38,
@@ -1084,19 +1088,20 @@ const styles = StyleSheet.create({
   },
   closeText: { color: COLORS.textMuted, fontSize: 17, fontWeight: "800" },
   largeCallButton: {
-    minHeight: 64,
+    minHeight: 66,
     flexDirection: "row",
     alignItems: "center",
     gap: SPACING.md,
     paddingHorizontal: SPACING.lg,
     borderRadius: RADIUS.lg,
-    backgroundColor: "rgba(22,163,74,0.15)",
+    backgroundColor: COLORS.info,
     borderWidth: 1,
-    borderColor: "rgba(74,222,128,0.30)",
+    borderColor: "#1D4ED8",
+    ...SHADOW,
   },
-  largeCallIcon: { color: "#4ADE80", fontSize: 26 },
+  largeCallIcon: { color: COLORS.white, fontSize: 26 },
   largeCallTitle: { color: COLORS.white, fontSize: 14, fontWeight: "900" },
-  largeCallSubtitle: { marginTop: 3, color: COLORS.textMuted, fontSize: 10.5 },
+  largeCallSubtitle: { marginTop: 3, color: "#DBEAFE", fontSize: 10.5 },
   label: {
     marginTop: SPACING.xl,
     marginBottom: SPACING.sm,
@@ -1117,8 +1122,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border,
   },
-  statusOptionIcon: { color: COLORS.textMuted, fontSize: 13, fontWeight: "900" },
-  statusOptionText: { color: COLORS.textMuted, fontSize: 9.5, fontWeight: "800" },
+  statusOptionActive: {
+    borderWidth: 2,
+    borderColor: COLORS.white,
+    transform: [{ scale: 1.05 }],
+    ...SOFT_SHADOW,
+  },
+  statusOptionIcon: { color: COLORS.white, fontSize: 13, fontWeight: "900" },
+  statusOptionText: { color: COLORS.white, fontSize: 9.5, fontWeight: "900" },
   input: {
     minHeight: 50,
     paddingHorizontal: SPACING.md,
@@ -1126,7 +1137,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surfaceLight,
     borderWidth: 1,
     borderColor: COLORS.border,
-    color: COLORS.white,
+    color: COLORS.text,
   },
   remarksInput: { minHeight: 100, paddingTop: SPACING.md, textAlignVertical: "top" },
   fieldHint: { marginTop: 5, color: COLORS.textMuted, fontSize: 9.5 },

@@ -13,6 +13,7 @@ import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import CustomerProfileCard from "../../components/customer/CustomerProfileCard";
+import BackButton from "../../components/BackButton";
 import EmptyState from "../../components/common/EmptyState";
 import ScreenSectionHeader from "../../components/common/ScreenSectionHeader";
 import CustomerTimeline from "../../components/customer/CustomerTimeline";
@@ -110,7 +111,7 @@ export default function Customer360Screen() {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
-          <Pressable onPress={() => router.back()}><Text style={styles.back}>‹ Back</Text></Pressable>
+          <BackButton compact fallbackRoute="/customers" />
           <Text style={styles.headerTitle}>Customer 360°</Text>
           <View style={styles.headerSpacer} />
         </View>
@@ -123,7 +124,7 @@ export default function Customer360Screen() {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
-          <Pressable onPress={() => router.back()}><Text style={styles.back}>‹ Back</Text></Pressable>
+          <BackButton compact fallbackRoute="/customers" />
           <Text style={styles.headerTitle}>Customer 360°</Text>
           <View style={styles.headerSpacer} />
         </View>
@@ -141,7 +142,7 @@ export default function Customer360Screen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()}><Text style={styles.back}>‹ Back</Text></Pressable>
+        <BackButton compact fallbackRoute="/customers" />
         <Text style={styles.headerTitle}>Customer 360°</Text>
         <View style={styles.headerSpacer} />
       </View>

@@ -12,6 +12,7 @@ import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import AppHeader from "../../components/AppHeader";
+import BackButton from "../../components/BackButton";
 import { COLORS, RADIUS, SPACING } from "../../constants/theme";
 import { Booking, getBookingById } from "../../storage/bookingStorage";
 import {
@@ -107,9 +108,7 @@ export default function BookingInstallmentListScreen() {
       <AppHeader segment="Booking Installments" />
       <View style={styles.container}>
         <View style={styles.headingRow}>
-          <Pressable onPress={() => router.back()}>
-            <Text style={styles.backText}>‹ Back</Text>
-          </Pressable>
+          <BackButton compact />
           <Pressable
             style={styles.addButton}
             onPress={() =>

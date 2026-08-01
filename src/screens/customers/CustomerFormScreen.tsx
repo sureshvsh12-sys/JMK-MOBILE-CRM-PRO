@@ -14,6 +14,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import PrimaryButton from "../../components/PrimaryButton";
+import BackButton from "../../components/BackButton";
 import { COLORS, RADIUS, SPACING } from "../../constants/theme";
 import { addCustomer, getCustomerById, updateCustomer } from "../../storage/customerStorage";
 import {
@@ -141,7 +142,7 @@ export default function CustomerFormScreen() {
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <View style={styles.header}>
-          <Pressable onPress={() => router.back()}><Text style={styles.back}>‹ Back</Text></Pressable>
+          <BackButton compact fallbackRoute="/customers" />
           <Text style={styles.headerTitle}>{customerId ? "Edit Customer" : "New Customer"}</Text>
           <View style={styles.headerSpacer} />
         </View>

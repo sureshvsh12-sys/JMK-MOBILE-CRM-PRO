@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { useFocusEffect, useRouter, type Href } from "expo-router";
 
+import AppButton from "../../components/AppButton";
 import AppHeader from "../../components/AppHeader";
 import ReportBarChart from "../../components/reports/ReportBarChart";
 import ReportKpiCard from "../../components/reports/ReportKpiCard";
@@ -339,13 +340,8 @@ function ModuleButton({
   accentColor: string;
   onPress: () => void;
 }) {
-  return (
-    <Pressable onPress={onPress} style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}>
-      <View style={[styles.actionDot, { backgroundColor: accentColor }]} />
-      <Text style={styles.actionText}>{label}</Text>
-      <Text style={[styles.actionArrow, { color: accentColor }]}>›</Text>
-    </Pressable>
-  );
+  const variant = accentColor === FINANCE ? "finance" : accentColor === ASSETS ? "assets" : accentColor === SOLAR ? "solar" : accentColor === COLORS.warning ? "warning" : "call";
+  return <AppButton label={label} variant={variant} onPress={onPress} fullWidth />;
 }
 
 const styles = StyleSheet.create({

@@ -15,6 +15,7 @@ import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import AppHeader from "../../components/AppHeader";
+import BackButton from "../../components/BackButton";
 import { COLORS, RADIUS, SHADOW, SPACING } from "../../constants/theme";
 import {
   addFollowUp,
@@ -226,15 +227,7 @@ export default function FollowUpFormScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-            style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
-            onPress={goBack}
-          >
-            <Text style={styles.backIcon}>‹</Text>
-            <Text style={styles.backText}>Back to Follow-ups</Text>
-          </Pressable>
+          <BackButton label="Follow-ups" onPress={goBack} />
 
           <View style={styles.headingBlock}>
             <Text style={styles.eyebrow}>{editingId ? "UPDATE ACTIVITY" : "SCHEDULE ACTIVITY"}</Text>

@@ -14,6 +14,7 @@ import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import AppHeader from "../../components/AppHeader";
+import BackButton from "../../components/BackButton";
 import { COLORS, RADIUS, SPACING } from "../../constants/theme";
 import { getCustomerById } from "../../storage/customerStorage";
 import {
@@ -181,9 +182,7 @@ export default function CustomerDocumentsScreen() {
 
       <View style={styles.container}>
         <View style={styles.headingRow}>
-          <Pressable onPress={() => router.back()}>
-            <Text style={styles.backText}>‹ Back</Text>
-          </Pressable>
+          <BackButton compact fallbackRoute="/customers" />
           <Pressable style={styles.addButton} onPress={openCreate}>
             <Text style={styles.addButtonText}>＋ Add Document</Text>
           </Pressable>

@@ -132,12 +132,13 @@ export default function LoginScreen() {
           <TextInput
             value={email}
             onChangeText={setEmail}
-            placeholder="admin@jmkgroup.in"
+            placeholder="suresh.vsh12@gmail.com"
             placeholderTextColor={COLORS.textMuted}
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
             textContentType="emailAddress"
+            autoComplete="email"
             style={styles.input}
           />
 
@@ -149,6 +150,7 @@ export default function LoginScreen() {
             placeholderTextColor={COLORS.textMuted}
             secureTextEntry
             textContentType="password"
+            autoComplete="password"
             onSubmitEditing={() => void handleLogin()}
             style={styles.input}
           />
