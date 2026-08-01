@@ -21,6 +21,7 @@ import { supabase } from "../../services/supabase";
 export default function LoginScreen() {
   const router = useRouter();
   const { session, loading: authLoading, configured, signIn } = useAuth();
+
   const [email, setEmail] = useState("suresh.vsh12@gmail.com");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -54,13 +55,16 @@ export default function LoginScreen() {
     }
 
     setLoading(true);
+
     try {
       await signIn(cleanEmail, password);
       router.replace("/dashboard");
     } catch (error) {
       Alert.alert(
         "Login Failed",
-        error instanceof Error ? error.message : "Email ya password sahi nahi hai."
+        error instanceof Error
+          ? error.message
+          : "Email ya password sahi nahi hai."
       );
     } finally {
       setLoading(false);
@@ -79,11 +83,15 @@ export default function LoginScreen() {
     }
 
     if (!cleanEmail) {
-      Alert.alert("Email Required", "Password reset ke liye email enter karein.");
+      Alert.alert(
+        "Email Required",
+        "Password reset ke liye email enter karein."
+      );
       return;
     }
 
     setResetLoading(true);
+
     try {
       const redirectTo =
         Platform.OS === "web" && typeof window !== "undefined"
@@ -94,7 +102,9 @@ export default function LoginScreen() {
         redirectTo,
       });
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
       Alert.alert(
         "Reset Email Sent",
@@ -103,7 +113,9 @@ export default function LoginScreen() {
     } catch (error) {
       Alert.alert(
         "Reset Failed",
-        error instanceof Error ? error.message : "Password reset email send nahi ho saka."
+        error instanceof Error
+          ? error.message
+          : "Password reset email send nahi ho saka."
       );
     } finally {
       setResetLoading(false);
@@ -120,7 +132,14 @@ export default function LoginScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <BrandLogo width={210} showTagline />
+        <View style={styles.logoWrap}>
+          <BrandLogo
+            width={210}
+            showGroupName
+            showTagline
+            background="light"
+          />
+        </View>
 
         <View style={styles.headingSection}>
           <Text style={styles.title}>Welcome Back</Text>
@@ -133,12 +152,14 @@ export default function LoginScreen() {
             value={email}
             onChangeText={setEmail}
             placeholder="suresh.vsh12@gmail.com"
-            placeholderTextColor={COLORS.textMuted}
+            placeholderTextColor="#64748B"
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
             textContentType="emailAddress"
             autoComplete="email"
+            selectionColor={COLORS.primary}
+            cursorColor={COLORS.primary}
             style={styles.input}
           />
 
@@ -147,10 +168,12 @@ export default function LoginScreen() {
             value={password}
             onChangeText={setPassword}
             placeholder="Enter password"
-            placeholderTextColor={COLORS.textMuted}
+            placeholderTextColor="#64748B"
             secureTextEntry
             textContentType="password"
             autoComplete="password"
+            selectionColor={COLORS.primary}
+            cursorColor={COLORS.primary}
             onSubmitEditing={() => void handleLogin()}
             style={styles.input}
           />
@@ -199,37 +222,63 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
+  container: {
+    flex: 1,
+    backgroundColor: "#EEF3F8",
+  },
   scrollContent: {
     flexGrow: 1,
     justifyContent: "center",
     paddingHorizontal: SPACING.xl,
     paddingVertical: 42,
   },
-  headingSection: { marginTop: SPACING.xl, marginBottom: SPACING.xl, alignItems: "center" },
-  title: { color: COLORS.white, fontSize: 28, fontWeight: "900" },
-  subtitle: { marginTop: 7, color: COLORS.primary, fontSize: 16, fontWeight: "700" },
+  logoWrap: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  headingSection: {
+    marginTop: SPACING.xl,
+    marginBottom: SPACING.xl,
+    alignItems: "center",
+  },
+  title: {
+    color: "#102033",
+    fontSize: 28,
+    fontWeight: "900",
+  },
+  subtitle: {
+    marginTop: 7,
+    color: COLORS.primary,
+    fontSize: 16,
+    fontWeight: "800",
+  },
   formCard: {
     width: "100%",
     maxWidth: 460,
     alignSelf: "center",
     padding: SPACING.xl,
     borderRadius: RADIUS.xl,
-    backgroundColor: COLORS.surface,
+    backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: "#D7E1EC",
   },
-  label: { marginBottom: 8, color: COLORS.text, fontSize: 14, fontWeight: "700" },
+  label: {
+    marginBottom: 8,
+    color: "#102033",
+    fontSize: 14,
+    fontWeight: "800",
+  },
   input: {
     minHeight: 52,
     marginBottom: SPACING.lg,
     paddingHorizontal: SPACING.lg,
     borderRadius: RADIUS.md,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.surfaceLight,
-    color: COLORS.white,
+    borderColor: "#CBD5E1",
+    backgroundColor: "#F8FAFC",
+    color: "#0F172A",
     fontSize: 15,
+    fontWeight: "600",
   },
   forgotButton: {
     alignSelf: "flex-end",
@@ -237,7 +286,9 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.lg,
     paddingVertical: 6,
   },
-  forgotButtonPressed: { opacity: 0.65 },
+  forgotButtonPressed: {
+    opacity: 0.65,
+  },
   forgotText: {
     color: COLORS.primary,
     fontSize: 13,
@@ -251,8 +302,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(245,158,11,0.35)",
   },
-  setupTitle: { marginBottom: 5, color: "#FBBF24", fontSize: 13, fontWeight: "800" },
-  setupText: { color: COLORS.textMuted, fontSize: 12, lineHeight: 19 },
+  setupTitle: {
+    marginBottom: 5,
+    color: "#B45309",
+    fontSize: 13,
+    fontWeight: "800",
+  },
+  setupText: {
+    color: "#475569",
+    fontSize: 12,
+    lineHeight: 19,
+  },
   segments: {
     marginTop: SPACING.xl,
     flexDirection: "row",
@@ -261,8 +321,19 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 7,
   },
-  finance: { color: COLORS.finance, fontWeight: "800" },
-  assets: { color: COLORS.assets, fontWeight: "800" },
-  solar: { color: COLORS.solar, fontWeight: "800" },
-  separator: { color: COLORS.textMuted },
+  finance: {
+    color: COLORS.finance,
+    fontWeight: "800",
+  },
+  assets: {
+    color: COLORS.assets,
+    fontWeight: "800",
+  },
+  solar: {
+    color: COLORS.solar,
+    fontWeight: "800",
+  },
+  separator: {
+    color: "#64748B",
+  },
 });

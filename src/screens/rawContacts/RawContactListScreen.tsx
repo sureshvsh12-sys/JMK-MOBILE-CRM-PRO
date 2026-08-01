@@ -1,3 +1,4 @@
+import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Alert,
@@ -12,7 +13,6 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { useFocusEffect, useRouter } from "expo-router";
 
 import AppHeader from "../../components/AppHeader";
 import EmptyState from "../../components/common/EmptyState";
@@ -555,10 +555,13 @@ export default function RawContactListScreen() {
                     { backgroundColor: statusColor },
                   ]}
                 >
-                  <View
-                    style={[styles.statusDot, { backgroundColor: statusColor }]}
-                  />
-                  <Text style={[styles.statusText, { color: statusColor }]}>
+                  <View style={styles.statusDot} />
+                  <Text
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.8}
+                    style={styles.statusText}
+                  >
                     {item.converted_to_lead ? "Converted" : item.call_status}
                   </Text>
                 </View>
@@ -987,16 +990,29 @@ const styles = StyleSheet.create({
   mobile: { marginTop: 4, color: COLORS.textSoft, fontSize: 13, fontWeight: "700" },
   location: { marginTop: 4, color: COLORS.textMuted, fontSize: 11 },
   statusBadge: {
-    maxWidth: 102,
+    minWidth: 112,
+    maxWidth: 132,
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
+    justifyContent: "center",
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
     borderRadius: RADIUS.round,
   },
-  statusDot: { width: 5, height: 5, borderRadius: 3 },
-  statusText: { color: COLORS.white, fontSize: 9, fontWeight: "900" },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: COLORS.white,
+  },
+  statusText: {
+    flexShrink: 1,
+    color: COLORS.white,
+    fontSize: 10,
+    fontWeight: "900",
+    textAlign: "center",
+  },
   remarksPreview: {
     marginTop: SPACING.md,
     padding: SPACING.md,
