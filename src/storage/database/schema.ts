@@ -1,5 +1,5 @@
 export const DATABASE_NAME = "JMK Mobile CRM PRO";
-export const DATABASE_VERSION = 2;
+export const DATABASE_VERSION = 3;
 
 export const DATABASE_META_KEY = "jmk_mobile_database_meta";
 

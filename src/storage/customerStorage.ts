@@ -10,6 +10,7 @@ import type {
 
 const CUSTOMER_CACHE_KEY = "jmk_mobile_customers";
 const CUSTOMER_PENDING_KEY = "jmk_mobile_customer_pending_operations";
+const LEGACY_DEMO_CUSTOMER_IDS = new Set(["customer-1", "customer-2"]);
 
 const CUSTOMER_COLUMNS = [
   "id",
@@ -110,16 +111,32 @@ async function readCustomers(): Promise<Customer[]> {
   try {
     const value = await AsyncStorage.getItem(CUSTOMER_CACHE_KEY);
     const parsed: unknown = value ? JSON.parse(value) : [];
-    return Array.isArray(parsed) ? (parsed as Customer[]) : [];
+    if (!Array.isArray(parsed)) return [];
+
+    const customers = (parsed as Customer[]).filter(
+      (customer) =>
+        customer &&
+        !LEGACY_DEMO_CUSTOMER_IDS.has(String(customer.id || ""))
+    );
+
+    if (customers.length !== parsed.length) {
+      await saveCustomers(customers);
+    }
+
+    return customers;
   } catch {
     return [];
   }
 }
 
 async function saveCustomers(customers: Customer[]): Promise<void> {
-  const sorted = [...customers].sort((a, b) =>
-    b.updatedAt.localeCompare(a.updatedAt)
-  );
+  const sorted = customers
+    .filter(
+      (customer) =>
+        customer &&
+        !LEGACY_DEMO_CUSTOMER_IDS.has(String(customer.id || ""))
+    )
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   await AsyncStorage.setItem(CUSTOMER_CACHE_KEY, JSON.stringify(sorted));
 }
 

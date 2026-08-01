@@ -4,18 +4,33 @@ import type { Lead, LeadInput } from "../types/lead";
 
 export const LEAD_STORAGE_KEY = "jmk_mobile_leads";
 
+const LEGACY_DEMO_LEAD_IDS = new Set(["lead-1", "lead-2", "lead-3"]);
+
 export async function getCachedLeads(): Promise<Lead[]> {
   try {
     const value = await AsyncStorage.getItem(LEAD_STORAGE_KEY);
     const parsed: unknown = value ? JSON.parse(value) : [];
-    return Array.isArray(parsed) ? (parsed as Lead[]) : [];
+    if (!Array.isArray(parsed)) return [];
+
+    const leads = (parsed as Lead[]).filter(
+      (lead) => lead && !LEGACY_DEMO_LEAD_IDS.has(String(lead.id || ""))
+    );
+
+    if (leads.length !== parsed.length) {
+      await cacheLeads(leads);
+    }
+
+    return leads;
   } catch {
     return [];
   }
 }
 
 export async function cacheLeads(leads: Lead[]): Promise<void> {
-  await AsyncStorage.setItem(LEAD_STORAGE_KEY, JSON.stringify(leads));
+  const productionLeads = leads.filter(
+    (lead) => lead && !LEGACY_DEMO_LEAD_IDS.has(String(lead.id || ""))
+  );
+  await AsyncStorage.setItem(LEAD_STORAGE_KEY, JSON.stringify(productionLeads));
 }
 
 export async function upsertCachedLead(lead: Lead): Promise<void> {

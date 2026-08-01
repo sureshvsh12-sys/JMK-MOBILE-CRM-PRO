@@ -177,8 +177,8 @@ export default function DashboardScreen() {
 
   const maxChartValue = Math.max(1, ...chartData.map((item) => item.value));
   const conversionRate =
-    data.rawContacts > 0
-      ? Math.min(100, Math.round((data.totalLeads / data.rawContacts) * 100))
+    data.totalLeads > 0
+      ? Math.min(100, Math.round((data.customers / data.totalLeads) * 100))
       : 0;
 
   function openRoute(route: Href) {

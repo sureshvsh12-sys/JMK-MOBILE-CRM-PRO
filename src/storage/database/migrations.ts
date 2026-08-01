@@ -20,12 +20,75 @@ const LEGACY_DEMO_IDS = new Set([
   "finance-sample-expense",
 ]);
 
+const LEGACY_DEMO_NOTIFICATION_TITLES = new Set([
+  "Today Follow-ups",
+  "Booking Collection",
+  "Finance Summary",
+]);
+
+const EXTRA_COLLECTION_KEYS = [
+  "jmk_mobile_booking_payments",
+  "jmk_mobile_booking_installments",
+  "jmk_mobile_customer_activities",
+  "jmk_mobile_customer_documents",
+  "jmk_mobile_solar_projects",
+  "jmk_mobile_employees",
+];
+
+const PENDING_OPERATION_KEYS = [
+  "jmk_mobile_followups_pending_operations",
+  "jmk_mobile_customer_pending_operations",
+  "jmk_mobile_sync_queue",
+];
+
+function stringField(record: Record<string, unknown>, keys: string[]): string {
+  for (const key of keys) {
+    const value = record[key];
+    if (value !== undefined && value !== null) return String(value);
+  }
+  return "";
+}
+
+function referencesLegacyDemo(record: Record<string, unknown>): boolean {
+  const candidateIds = [
+    stringField(record, ["id"]),
+    stringField(record, ["leadId", "lead_id"]),
+    stringField(record, ["customerId", "customer_id"]),
+    stringField(record, ["followUpId", "followup_id"]),
+    stringField(record, ["bookingId", "booking_id"]),
+    stringField(record, ["rawContactId", "raw_contact_id"]),
+  ];
+
+  return candidateIds.some((id) => LEGACY_DEMO_IDS.has(id));
+}
+
 async function readMeta(): Promise<DatabaseMeta | null> {
   try {
     const raw = await AsyncStorage.getItem(DATABASE_META_KEY);
     return raw ? (JSON.parse(raw) as DatabaseMeta) : null;
   } catch {
     return null;
+  }
+}
+
+async function cleanCollection(key: string): Promise<void> {
+  const raw = await AsyncStorage.getItem(key);
+  if (!raw) return;
+
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return;
+
+    const cleaned = parsed.filter((item) => {
+      if (!item || typeof item !== "object") return false;
+      return !referencesLegacyDemo(item as Record<string, unknown>);
+    });
+
+    if (cleaned.length !== parsed.length) {
+      await AsyncStorage.setItem(key, JSON.stringify(cleaned));
+    }
+  } catch {
+    // Leave unreadable local data untouched so backup/restore can recover it.
   }
 }
 
@@ -36,31 +99,14 @@ async function cleanLegacyDemoRows(): Promise<void> {
     STORAGE_KEYS.followUps,
     STORAGE_KEYS.bookings,
     STORAGE_KEYS.financeEntries,
+    ...EXTRA_COLLECTION_KEYS,
   ];
 
-  await Promise.all(
-    collectionKeys.map(async (key) => {
-      const raw = await AsyncStorage.getItem(key);
-      if (!raw) return;
+  await Promise.all(collectionKeys.map(cleanCollection));
+}
 
-      try {
-        const parsed: unknown = JSON.parse(raw);
-        if (!Array.isArray(parsed)) return;
-
-        const cleaned = parsed.filter((item) => {
-          if (!item || typeof item !== "object") return false;
-          const id = String((item as { id?: unknown }).id || "");
-          return !LEGACY_DEMO_IDS.has(id);
-        });
-
-        if (cleaned.length !== parsed.length) {
-          await AsyncStorage.setItem(key, JSON.stringify(cleaned));
-        }
-      } catch {
-        // Keep unreadable values untouched so backup/restore can recover them.
-      }
-    })
-  );
+async function cleanPendingOperations(): Promise<void> {
+  await Promise.all(PENDING_OPERATION_KEYS.map(cleanCollection));
 }
 
 async function removeLegacyNotificationSeeds(): Promise<void> {
@@ -71,16 +117,12 @@ async function removeLegacyNotificationSeeds(): Promise<void> {
     const parsed: unknown = JSON.parse(raw);
     if (!Array.isArray(parsed)) return;
 
-    const demoTitles = new Set([
-      "Today Follow-ups",
-      "Booking Collection",
-      "Finance Summary",
-    ]);
-
     const cleaned = parsed.filter((item) => {
       if (!item || typeof item !== "object") return false;
-      const title = String((item as { title?: unknown }).title || "");
-      return !demoTitles.has(title);
+      const record = item as Record<string, unknown>;
+      const id = stringField(record, ["id"]);
+      const title = stringField(record, ["title"]);
+      return !LEGACY_DEMO_IDS.has(id) && !LEGACY_DEMO_NOTIFICATION_TITLES.has(title);
     });
 
     if (cleaned.length !== parsed.length) {
@@ -95,8 +137,9 @@ export async function runDatabaseMigrations(): Promise<DatabaseMeta> {
   const currentMeta = await readMeta();
   const now = new Date().toISOString();
 
-  if (!currentMeta || currentMeta.version < 2) {
+  if (!currentMeta || currentMeta.version < 3) {
     await cleanLegacyDemoRows();
+    await cleanPendingOperations();
     await removeLegacyNotificationSeeds();
   }
 
