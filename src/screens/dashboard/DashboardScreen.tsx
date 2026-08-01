@@ -1,3 +1,4 @@
+import { useRouter, type Href } from "expo-router";
 import { useMemo } from "react";
 import {
   Alert,
@@ -7,11 +8,10 @@ import {
   Text,
   View,
 } from "react-native";
-import { useRouter, type Href } from "expo-router";
 
 import AppHeader from "../../components/AppHeader";
-import BrandLogo from "../../components/BrandLogo";
 import BottomNavigation from "../../components/BottomNavigation";
+import BrandLogo from "../../components/BrandLogo";
 import DashboardStatCard from "../../components/DashboardStatCard";
 import HomeQuickActions from "../../components/HomeQuickActions";
 import QuickActionCard from "../../components/QuickActionCard";
@@ -102,12 +102,10 @@ export default function DashboardScreen() {
   const router = useRouter();
   const { data, isLoading, error, refresh } = useDashboardStats();
   const { user, signOut } = useAuth();
-  const displayName = String(
-    user?.user_metadata?.full_name ||
-      user?.user_metadata?.name ||
-      user?.email ||
-      "JMK User"
-  );
+  const displayName =
+  user?.user_metadata?.full_name ||
+  user?.user_metadata?.name ||
+  "Suresh Vishwakarma";
 
   const dashboardStats = useMemo<readonly DashboardStat[]>(
     () => [
@@ -588,7 +586,7 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: "#EEF3F8",
   },
   scrollView: {
     flex: 1,
@@ -714,19 +712,19 @@ const styles = StyleSheet.create({
   },
   sectionEyebrow: {
     marginBottom: 4,
-    color: "#6F849A",
+    color: "#71869B",
     fontSize: 9,
     fontWeight: "900",
     letterSpacing: 1.3,
   },
   sectionTitle: {
-    color: COLORS.white,
+    color: "#102033",
     fontSize: 19,
     fontWeight: "900",
     letterSpacing: -0.25,
   },
   sectionSubtitle: {
-    color: COLORS.textMuted,
+    color: "#61758A",
     fontSize: 10,
     fontWeight: "700",
   },
@@ -741,9 +739,9 @@ const styles = StyleSheet.create({
     minHeight: 34,
     paddingHorizontal: 11,
     borderRadius: RADIUS.round,
-    backgroundColor: COLORS.surface,
+    backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: "#DCE6F1",
   },
   refreshIcon: {
     marginRight: 5,
@@ -752,7 +750,7 @@ const styles = StyleSheet.create({
     fontWeight: "900",
   },
   refreshText: {
-    color: COLORS.textSoft,
+    color: "#30465D",
     fontSize: 10,
     fontWeight: "800",
   },
@@ -772,9 +770,9 @@ const styles = StyleSheet.create({
     padding: SPACING.lg,
     overflow: "hidden",
     borderRadius: RADIUS.xl,
-    backgroundColor: "rgba(13,27,45,0.94)",
+    backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "rgba(148,163,184,0.18)",
+    borderColor: "#DCE6F1",
   },
   revenueIcon: {
     width: 39,
@@ -789,7 +787,7 @@ const styles = StyleSheet.create({
   },
   revenueLabel: {
     marginTop: 15,
-    color: COLORS.textMuted,
+    color: "#61758A",
     fontSize: 10,
     fontWeight: "800",
     textTransform: "uppercase",
@@ -797,7 +795,7 @@ const styles = StyleSheet.create({
   },
   revenueValue: {
     marginTop: 6,
-    color: COLORS.white,
+    color: "#102033",
     fontSize: 22,
     fontWeight: "900",
     letterSpacing: -0.5,
@@ -811,9 +809,9 @@ const styles = StyleSheet.create({
     minHeight: 238,
     padding: SPACING.lg,
     borderRadius: RADIUS.xl,
-    backgroundColor: "rgba(13,27,45,0.96)",
+    backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "rgba(148,163,184,0.18)",
+    borderColor: "#DCE6F1",
   },
   chartHeader: {
     flexDirection: "row",
@@ -821,13 +819,13 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   chartTitle: {
-    color: COLORS.white,
+    color: "#102033",
     fontSize: 15,
     fontWeight: "900",
   },
   chartSubtitle: {
     marginTop: 3,
-    color: COLORS.textMuted,
+    color: "#61758A",
     fontSize: 10,
     fontWeight: "600",
   },
@@ -864,7 +862,7 @@ const styles = StyleSheet.create({
   },
   chartValue: {
     marginBottom: 6,
-    color: COLORS.textSoft,
+    color: "#30465D",
     fontSize: 9,
     fontWeight: "800",
   },
@@ -874,7 +872,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     overflow: "hidden",
     borderRadius: RADIUS.round,
-    backgroundColor: "rgba(148,163,184,0.08)",
+    backgroundColor: "#E8EFF6",
   },
   chartBar: {
     width: "100%",
@@ -882,14 +880,14 @@ const styles = StyleSheet.create({
   },
   chartLabel: {
     marginTop: 7,
-    color: COLORS.textMuted,
+    color: "#61758A",
     fontSize: 8,
     fontWeight: "700",
   },
   followupCard: {
     padding: SPACING.lg,
     borderRadius: RADIUS.xl,
-    backgroundColor: "rgba(245,158,11,0.09)",
+    backgroundColor: "#FFF9EC",
     borderWidth: 1,
     borderColor: "rgba(245,158,11,0.28)",
   },
@@ -915,13 +913,13 @@ const styles = StyleSheet.create({
     marginHorizontal: SPACING.md,
   },
   followupTitle: {
-    color: COLORS.white,
+    color: "#102033",
     fontSize: 14,
     fontWeight: "900",
   },
   followupSubtitle: {
     marginTop: 5,
-    color: "#B7C5D4",
+    color: "#61758A",
     fontSize: 10,
     lineHeight: 16,
   },
@@ -953,9 +951,9 @@ const styles = StyleSheet.create({
     minHeight: 126,
     padding: SPACING.lg,
     borderRadius: RADIUS.xl,
-    backgroundColor: "rgba(13,27,45,0.94)",
+    backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "rgba(148,163,184,0.18)",
+    borderColor: "#DCE6F1",
   },
   primaryActionIcon: {
     width: 42,
@@ -971,13 +969,13 @@ const styles = StyleSheet.create({
   },
   primaryActionTitle: {
     marginTop: SPACING.md,
-    color: COLORS.white,
+    color: "#102033",
     fontSize: 13,
     fontWeight: "900",
   },
   primaryActionSubtitle: {
     marginTop: 4,
-    color: COLORS.textMuted,
+    color: "#61758A",
     fontSize: 10,
     fontWeight: "600",
   },
@@ -988,9 +986,9 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.xl,
     paddingHorizontal: SPACING.lg,
     borderRadius: RADIUS.xl,
-    backgroundColor: "rgba(13,27,45,0.94)",
+    backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "rgba(148,163,184,0.18)",
+    borderColor: "#DCE6F1",
   },
   activityItem: {
     minHeight: 76,
@@ -1007,26 +1005,26 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   activityTitle: {
-    color: COLORS.white,
+    color: "#102033",
     fontSize: 12,
     fontWeight: "800",
   },
   activityText: {
     marginTop: 4,
-    color: COLORS.textMuted,
+    color: "#61758A",
     fontSize: 10,
     lineHeight: 15,
   },
   activityDivider: {
     height: 1,
-    backgroundColor: "rgba(148,163,184,0.12)",
+    backgroundColor: "#E5EDF5",
   },
   footer: {
     marginTop: SPACING.xxl,
     alignItems: "center",
   },
   footerBrand: {
-    color: COLORS.white,
+    color: "#102033",
     fontSize: 14,
     fontWeight: "900",
     letterSpacing: 1,
@@ -1039,7 +1037,7 @@ const styles = StyleSheet.create({
   },
   footerDeveloper: {
     marginTop: 8,
-    color: COLORS.textMuted,
+    color: "#61758A",
     fontSize: 9,
     textAlign: "center",
   },

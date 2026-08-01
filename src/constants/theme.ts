@@ -1,32 +1,32 @@
 import { Platform } from "react-native";
 
 export const SEGMENT_COLORS = {
-  finance: "#10B981",
-  assets: "#D4A72C",
+  finance: "#059669",
+  assets: "#C88A12",
   solar: "#F97316",
 } as const;
 
 export const COLORS = {
-  background: "#06111F",
-  backgroundLight: "#F4F7FB",
-  surface: "#0D1B2D",
-  surfaceLight: "#15263B",
-  surfaceElevated: "#1B2F48",
-  surfaceGlass: "rgba(13,27,45,0.86)",
-  primary: "#DC2626",
-  primaryDark: "#991B1B",
-  primarySoft: "rgba(220,38,38,0.14)",
-  navy: "#07182A",
+  background: "#EEF3F8",
+  backgroundLight: "#F7F9FC",
+  surface: "#FFFFFF",
+  surfaceLight: "#F3F7FB",
+  surfaceElevated: "#FFFFFF",
+  surfaceGlass: "rgba(255,255,255,0.92)",
+  primary: "#E3262E",
+  primaryDark: "#B91C24",
+  primarySoft: "rgba(227,38,46,0.10)",
+  navy: "#071A2D",
   white: "#FFFFFF",
   black: "#000000",
-  text: "#F8FAFC",
-  textMuted: "#9AAEC2",
-  textSoft: "#C4D0DC",
+  text: "#102033",
+  textMuted: "#667C91",
+  textSoft: "#34495E",
   textDark: "#102033",
-  border: "#263A52",
-  borderSoft: "rgba(148,163,184,0.18)",
-  success: "#16A34A",
-  warning: "#F59E0B",
+  border: "#DCE6F1",
+  borderSoft: "rgba(15,42,67,0.10)",
+  success: "#059669",
+  warning: "#D9970B",
   danger: "#DC2626",
   info: "#2563EB",
   finance: SEGMENT_COLORS.finance,
@@ -61,43 +61,43 @@ export const RADIUS = {
 } as const;
 
 export const SHADOW = {
-  shadowColor: "#000000",
-  shadowOffset: { width: 0, height: 6 },
-  shadowOpacity: 0.28,
-  shadowRadius: 12,
-  elevation: 8,
+  shadowColor: "#18324A",
+  shadowOffset: { width: 0, height: 8 },
+  shadowOpacity: 0.12,
+  shadowRadius: 18,
+  elevation: 6,
 } as const;
 
 export const SOFT_SHADOW = {
-  shadowColor: "#000000",
-  shadowOffset: { width: 0, height: 3 },
-  shadowOpacity: 0.14,
-  shadowRadius: 8,
-  elevation: 4,
+  shadowColor: "#18324A",
+  shadowOffset: { width: 0, height: 4 },
+  shadowOpacity: 0.08,
+  shadowRadius: 12,
+  elevation: 3,
 } as const;
 
 export const Colors = {
   light: {
-    text: COLORS.textDark,
-    textSecondary: "#687076",
-    background: COLORS.backgroundLight,
-    backgroundElement: COLORS.white,
-    backgroundSelected: "#E8EEF5",
+    text: COLORS.text,
+    textSecondary: COLORS.textMuted,
+    background: COLORS.background,
+    backgroundElement: COLORS.surface,
+    backgroundSelected: "#E9F0F7",
     tint: COLORS.primary,
-    icon: "#687076",
-    tabIconDefault: "#687076",
+    icon: "#60758A",
+    tabIconDefault: "#74879B",
     tabIconSelected: COLORS.primary,
   },
   dark: {
-    text: "#ECEDEE",
-    textSecondary: "#9BA1A6",
-    background: COLORS.background,
-    backgroundElement: COLORS.surface,
-    backgroundSelected: COLORS.surfaceLight,
-    tint: COLORS.white,
-    icon: "#9BA1A6",
-    tabIconDefault: "#9BA1A6",
-    tabIconSelected: COLORS.primary,
+    text: "#F8FAFC",
+    textSecondary: "#A9B8C7",
+    background: "#06111F",
+    backgroundElement: "#0D1B2D",
+    backgroundSelected: "#172A40",
+    tint: "#FFFFFF",
+    icon: "#A9B8C7",
+    tabIconDefault: "#95A8BB",
+    tabIconSelected: "#FF6268",
   },
 } as const;
 
@@ -118,7 +118,11 @@ export function getSegmentColor(segment?: string | null): string {
   const normalized = (segment ?? "").trim().toLowerCase();
 
   if (normalized.includes("financ")) return SEGMENT_COLORS.finance;
-  if (normalized.includes("asset") || normalized.includes("property") || normalized.includes("real")) {
+  if (
+    normalized.includes("asset") ||
+    normalized.includes("property") ||
+    normalized.includes("real")
+  ) {
     return SEGMENT_COLORS.assets;
   }
   if (normalized.includes("solar")) return SEGMENT_COLORS.solar;
@@ -150,5 +154,5 @@ export const Fonts =
     },
   }) ?? defaultFonts;
 
-export const BottomTabInset = 82;
+export const BottomTabInset = 96;
 export const MaxContentWidth = 960;

@@ -3,6 +3,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -15,13 +16,15 @@ import BrandLogo from "../../components/BrandLogo";
 import PrimaryButton from "../../components/PrimaryButton";
 import { COLORS, RADIUS, SPACING } from "../../constants/theme";
 import { useAuth } from "../../context/AuthContext";
+import { supabase } from "../../services/supabase";
 
 export default function LoginScreen() {
   const router = useRouter();
   const { session, loading: authLoading, configured, signIn } = useAuth();
-  const [email, setEmail] = useState("admin@jmks.in");
+  const [email, setEmail] = useState("suresh.vsh12@gmail.com");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
 
   useEffect(() => {
     if (!authLoading && session) {
@@ -61,6 +64,49 @@ export default function LoginScreen() {
       );
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleForgotPassword() {
+    const cleanEmail = email.trim().toLowerCase();
+
+    if (!configured) {
+      Alert.alert(
+        "Supabase Setup Required",
+        "Project root me .env file bana kar Supabase URL aur anon key set karein."
+      );
+      return;
+    }
+
+    if (!cleanEmail) {
+      Alert.alert("Email Required", "Password reset ke liye email enter karein.");
+      return;
+    }
+
+    setResetLoading(true);
+    try {
+      const redirectTo =
+        Platform.OS === "web" && typeof window !== "undefined"
+          ? `${window.location.origin}/reset-password`
+          : "jmkmobile://reset-password";
+
+      const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
+        redirectTo,
+      });
+
+      if (error) throw error;
+
+      Alert.alert(
+        "Reset Email Sent",
+        `Password reset link ${cleanEmail} par bhej diya gaya hai. Inbox aur Spam folder check karein.`
+      );
+    } catch (error) {
+      Alert.alert(
+        "Reset Failed",
+        error instanceof Error ? error.message : "Password reset email send nahi ho saka."
+      );
+    } finally {
+      setResetLoading(false);
     }
   }
 
@@ -106,6 +152,20 @@ export default function LoginScreen() {
             onSubmitEditing={() => void handleLogin()}
             style={styles.input}
           />
+
+          <Pressable
+            accessibilityRole="button"
+            disabled={resetLoading}
+            onPress={() => void handleForgotPassword()}
+            style={({ pressed }) => [
+              styles.forgotButton,
+              pressed && styles.forgotButtonPressed,
+            ]}
+          >
+            <Text style={styles.forgotText}>
+              {resetLoading ? "Sending reset link..." : "Forgot Password?"}
+            </Text>
+          </Pressable>
 
           <PrimaryButton
             title="Login to JMK CRM"
@@ -168,6 +228,18 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surfaceLight,
     color: COLORS.white,
     fontSize: 15,
+  },
+  forgotButton: {
+    alignSelf: "flex-end",
+    marginTop: -8,
+    marginBottom: SPACING.lg,
+    paddingVertical: 6,
+  },
+  forgotButtonPressed: { opacity: 0.65 },
+  forgotText: {
+    color: COLORS.primary,
+    fontSize: 13,
+    fontWeight: "800",
   },
   setupBox: {
     marginTop: SPACING.lg,

@@ -369,7 +369,15 @@ function StatusBadge({ status }: { status: FollowUpStatus }) {
         status === "Cancelled" && styles.badgeCancelled,
       ]}
     >
-      <Text style={styles.badgeText}>{status}</Text>
+      <Text
+        style={[
+          styles.badgeText,
+          status === "Completed" && styles.badgeTextDone,
+          status === "Cancelled" && styles.badgeTextCancelled,
+        ]}
+      >
+        {status}
+      </Text>
     </View>
   );
 }
@@ -419,8 +427,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border,
   },
-  backIcon: { color: COLORS.white, marginRight: 7, fontSize: 28, lineHeight: 29, fontWeight: "700" },
-  backText: { color: COLORS.white, fontSize: 12, fontWeight: "900" },
+  backIcon: { color: COLORS.text, marginRight: 7, fontSize: 28, lineHeight: 29, fontWeight: "700" },
+  backText: { color: COLORS.text, fontSize: 12, fontWeight: "900" },
   primaryButton: {
     minHeight: 42,
     justifyContent: "center",
@@ -513,7 +521,9 @@ const styles = StyleSheet.create({
   },
   badgeDone: { backgroundColor: "rgba(22,163,74,0.18)", borderColor: "rgba(22,163,74,0.38)" },
   badgeCancelled: { backgroundColor: COLORS.surfaceLight, borderColor: COLORS.border },
-  badgeText: { color: COLORS.white, fontWeight: "900", fontSize: 8 },
+  badgeText: { color: "#9A6700", fontWeight: "900", fontSize: 8 },
+  badgeTextDone: { color: "#047857" },
+  badgeTextCancelled: { color: COLORS.textMuted },
   scheduleRow: {
     flexDirection: "row",
     alignItems: "center",

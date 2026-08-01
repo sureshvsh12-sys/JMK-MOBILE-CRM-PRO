@@ -1,13 +1,6 @@
-import { useEffect, useRef, useState } from "react";
-import {
-  Animated,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { COLORS, RADIUS, SHADOW, SPACING } from "../constants/theme";
+import { COLORS, RADIUS, SOFT_SHADOW, SPACING } from "../constants/theme";
 
 type DashboardStatCardProps = {
   title: string;
@@ -28,84 +21,50 @@ export default function DashboardStatCard({
   trend,
   onPress,
 }: DashboardStatCardProps) {
-  const animatedValue = useRef(new Animated.Value(0)).current;
-  const [displayValue, setDisplayValue] = useState<string | number>(
-    typeof value === "number" ? 0 : value
-  );
-
-  useEffect(() => {
-    if (typeof value !== "number") {
-      setDisplayValue(value);
-      return;
-    }
-
-    animatedValue.stopAnimation();
-    animatedValue.setValue(0);
-
-    const listenerId = animatedValue.addListener(({ value: nextValue }) => {
-      setDisplayValue(Math.round(nextValue));
-    });
-
-    Animated.timing(animatedValue, {
-      toValue: value,
-      duration: 650,
-      useNativeDriver: false,
-    }).start();
-
-    return () => {
-      animatedValue.removeListener(listenerId);
-    };
-  }, [animatedValue, value]);
-
-  const content = (
-    <>
-      <View
-        pointerEvents="none"
-        style={[
-          styles.glow,
-          { backgroundColor: `${accentColor}18` },
-        ]}
-      />
+  return (
+    <Pressable
+      accessibilityRole={onPress ? "button" : undefined}
+      disabled={!onPress}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.card,
+        { borderTopColor: accentColor },
+        pressed && styles.pressed,
+      ]}
+    >
+      <View style={[styles.glow, { backgroundColor: `${accentColor}12` }]} />
 
       <View style={styles.topRow}>
         <View
           style={[
             styles.iconContainer,
             {
-              backgroundColor: `${accentColor}1F`,
-              borderColor: `${accentColor}55`,
+              backgroundColor: `${accentColor}14`,
+              borderColor: `${accentColor}35`,
             },
           ]}
         >
-          <Text style={styles.icon}>{icon}</Text>
+          <Text style={[styles.icon, { color: accentColor }]}>{icon}</Text>
         </View>
 
-        <View style={styles.topMeta}>
-          {trend ? (
-            <View
-              style={[
-                styles.trendPill,
-                { backgroundColor: `${accentColor}1A` },
-              ]}
-            >
-              <Text style={[styles.trendText, { color: accentColor }]}>
-                {trend}
-              </Text>
-            </View>
-          ) : null}
+        {trend ? (
+          <View style={[styles.trendPill, { backgroundColor: `${accentColor}12` }]}>
+            <Text style={[styles.trendText, { color: accentColor }]}>{trend}</Text>
+          </View>
+        ) : (
           <View style={[styles.accentDot, { backgroundColor: accentColor }]} />
-        </View>
+        )}
       </View>
 
-      <Text style={styles.title}>{title}</Text>
+      <Text style={styles.title}>{title.toUpperCase()}</Text>
 
       <Text
         numberOfLines={1}
         adjustsFontSizeToFit
-        minimumFontScale={0.72}
+        minimumFontScale={0.8}
         style={styles.value}
       >
-        {displayValue}
+        {value}
       </Text>
 
       {description ? (
@@ -114,57 +73,36 @@ export default function DashboardStatCard({
         </Text>
       ) : null}
 
-      <View style={[styles.bottomLine, { backgroundColor: accentColor }]} />
-    </>
+      <View style={[styles.accentLine, { backgroundColor: accentColor }]} />
+    </Pressable>
   );
-
-  if (onPress) {
-    return (
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={`${title}: ${String(value)}`}
-        onPress={onPress}
-        style={({ pressed }) => [
-          styles.card,
-          pressed && styles.pressed,
-        ]}
-      >
-        {content}
-      </Pressable>
-    );
-  }
-
-  return <View style={styles.card}>{content}</View>;
 }
 
 const styles = StyleSheet.create({
   card: {
-    width: "48.4%",
+    width: "48.3%",
     minHeight: 158,
     padding: SPACING.lg,
     overflow: "hidden",
     borderRadius: RADIUS.xl,
-    backgroundColor: "rgba(13,27,45,0.96)",
+    backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: "rgba(148,163,184,0.19)",
-    ...SHADOW,
+    borderColor: COLORS.border,
+    borderTopWidth: 3,
+    ...SOFT_SHADOW,
   },
   glow: {
     position: "absolute",
-    top: -42,
-    right: -32,
-    width: 116,
-    height: 116,
-    borderRadius: 58,
+    top: -52,
+    right: -45,
+    width: 130,
+    height: 130,
+    borderRadius: 65,
   },
   topRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-  },
-  topMeta: {
-    alignItems: "flex-end",
-    gap: 8,
   },
   iconContainer: {
     width: 44,
@@ -176,11 +114,11 @@ const styles = StyleSheet.create({
   },
   icon: {
     fontSize: 21,
+    fontWeight: "900",
   },
   trendPill: {
-    minHeight: 22,
-    justifyContent: "center",
-    paddingHorizontal: 8,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
     borderRadius: RADIUS.round,
   },
   trendText: {
@@ -188,42 +126,41 @@ const styles = StyleSheet.create({
     fontWeight: "900",
   },
   accentDot: {
-    width: 6,
-    height: 6,
+    width: 7,
+    height: 7,
     borderRadius: RADIUS.round,
   },
   title: {
     marginTop: SPACING.md,
     color: COLORS.textMuted,
-    fontSize: 11,
-    fontWeight: "800",
-    letterSpacing: 0.2,
-    textTransform: "uppercase",
+    fontSize: 10,
+    fontWeight: "900",
+    letterSpacing: 0.45,
   },
   value: {
     marginTop: 5,
-    color: COLORS.white,
-    fontSize: 25,
+    color: COLORS.text,
+    fontSize: 26,
     fontWeight: "900",
     letterSpacing: -0.6,
   },
   description: {
     marginTop: 5,
-    color: "#7F93A8",
+    color: COLORS.textMuted,
     fontSize: 10,
     fontWeight: "600",
   },
-  bottomLine: {
+  accentLine: {
     position: "absolute",
-    right: 16,
-    bottom: 10,
-    left: 16,
+    left: SPACING.lg,
+    right: SPACING.lg,
+    bottom: 9,
     height: 2,
     borderRadius: RADIUS.round,
-    opacity: 0.55,
+    opacity: 0.8,
   },
   pressed: {
-    opacity: 0.82,
-    transform: [{ scale: 0.98 }],
+    opacity: 0.88,
+    transform: [{ scale: 0.985 }],
   },
 });

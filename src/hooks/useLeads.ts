@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Lead, LeadSegment, LeadStage } from "../types/lead";
 import { fetchLeads } from "../services/leadsService";
-import { isSupabaseConfigured, supabase } from "../services/supabase";
+import { subscribeToCrmRealtime } from "../services/realtimeService";
 
 export function useLeads(filters?: {
   segment?: LeadSegment | "all";
@@ -33,14 +33,21 @@ export function useLeads(filters?: {
   }, [load]);
 
   useEffect(() => {
-    if (!isSupabaseConfigured) return;
+    let refreshTimer: ReturnType<typeof setTimeout> | null = null;
 
-    const channel = supabase
-      .channel("mobile-leads-live")
-      .on("postgres_changes", { event: "*", schema: "public", table: "leads" }, () => void load())
-      .subscribe();
+    const unsubscribe = subscribeToCrmRealtime((change) => {
+      if (change.table !== "leads") return;
+
+      if (refreshTimer) clearTimeout(refreshTimer);
+      refreshTimer = setTimeout(() => {
+        refreshTimer = null;
+        void load();
+      }, 180);
+    });
+
     return () => {
-      void supabase.removeChannel(channel);
+      if (refreshTimer) clearTimeout(refreshTimer);
+      unsubscribe();
     };
   }, [load]);
 

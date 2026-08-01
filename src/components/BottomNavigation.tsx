@@ -1,18 +1,8 @@
-import { SymbolView } from "expo-symbols";
 import { usePathname, useRouter, type Href } from "expo-router";
-import { useEffect, useMemo, useRef } from "react";
-import {
-  Animated,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-  type ViewStyle,
-} from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { COLORS, RADIUS, SHADOW } from "../constants/theme";
-import { useColorScheme } from "../hooks/use-color-scheme";
 
 export type BottomNavigationKey =
   | "dashboard"
@@ -21,16 +11,10 @@ export type BottomNavigationKey =
   | "followups"
   | "more";
 
-type NavigationIcon = {
-  ios: string;
-  android: string;
-  web: string;
-};
-
 type NavigationItem = {
   key: BottomNavigationKey;
   title: string;
-  icon: NavigationIcon;
+  icon: string;
   route: Href;
   matchPaths: readonly string[];
 };
@@ -38,368 +22,146 @@ type NavigationItem = {
 type BottomNavigationProps = {
   activeKey?: BottomNavigationKey;
   onChange?: (key: BottomNavigationKey) => void;
-  onNavigate?: (key: BottomNavigationKey) => void;
-};
-
-type NavigationButtonProps = {
-  item: NavigationItem;
-  active: boolean;
-  dark: boolean;
-  onPress: () => void;
 };
 
 const ITEMS: readonly NavigationItem[] = [
-  {
-    key: "dashboard",
-    title: "Home",
-    icon: { ios: "house.fill", android: "home", web: "home" },
-    route: "/dashboard",
-    matchPaths: ["/dashboard"],
-  },
-  {
-    key: "leads",
-    title: "Leads",
-    icon: {
-      ios: "person.crop.circle.badge.plus",
-      android: "person_add",
-      web: "person_add",
-    },
-    route: "/leads",
-    matchPaths: ["/leads", "/lead-form"],
-  },
+  { key: "dashboard", title: "Home", icon: "⌂", route: "/dashboard", matchPaths: ["/dashboard"] },
+  { key: "leads", title: "Leads", icon: "♙", route: "/leads", matchPaths: ["/leads", "/lead-form"] },
   {
     key: "customers",
     title: "Customers",
-    icon: { ios: "person.2.fill", android: "group", web: "group" },
+    icon: "♟",
     route: "/customers",
-    matchPaths: [
-      "/customers",
-      "/customer-form",
-      "/customer-360",
-      "/customer-documents",
-    ],
+    matchPaths: ["/customers", "/customer-form", "/customer-360", "/customer-documents"],
   },
   {
     key: "followups",
     title: "Follow-ups",
-    icon: {
-      ios: "calendar.badge.clock",
-      android: "event_repeat",
-      web: "event_repeat",
-    },
+    icon: "◷",
     route: "/followups",
     matchPaths: ["/followups", "/followup-form"],
   },
   {
     key: "more",
     title: "More",
-    icon: {
-      ios: "square.grid.2x2.fill",
-      android: "apps",
-      web: "apps",
-    },
+    icon: "•••",
     route: "/settings",
     matchPaths: [
-      "/settings",
-      "/bookings",
-      "/booking-form",
-      "/booking-payments",
-      "/booking-payment-form",
-      "/booking-installments",
-      "/booking-installment-form",
-      "/finance",
-      "/finance-entry",
-      "/solar",
-      "/solar-form",
-      "/employees",
-      "/reports",
-      "/search",
-      "/notifications",
-      "/raw-contacts",
+      "/settings", "/bookings", "/booking-form", "/booking-payments",
+      "/booking-payment-form", "/booking-installments", "/booking-installment-form",
+      "/finance", "/finance-entry", "/solar", "/solar-form", "/employees",
+      "/reports", "/search", "/notifications", "/raw-contacts",
     ],
   },
 ];
 
 function matchesPath(pathname: string, paths: readonly string[]) {
-  return paths.some(
-    (path) => pathname === path || pathname.startsWith(`${path}/`)
-  );
+  return paths.some((path) => pathname === path || pathname.startsWith(`${path}/`));
 }
 
-function NavigationButton({
-  item,
-  active,
-  dark,
-  onPress,
-}: NavigationButtonProps) {
-  const progress = useRef(new Animated.Value(active ? 1 : 0)).current;
-  const pressScale = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    Animated.spring(progress, {
-      toValue: active ? 1 : 0,
-      damping: 18,
-      stiffness: 210,
-      mass: 0.8,
-      useNativeDriver: true,
-    }).start();
-  }, [active, progress]);
-
-  const animatedIconStyle = useMemo(
-    () => ({
-      transform: [
-        {
-          translateY: progress.interpolate({
-            inputRange: [0, 1],
-            outputRange: [0, -3],
-          }),
-        },
-        {
-          scale: Animated.multiply(
-            pressScale,
-            progress.interpolate({
-              inputRange: [0, 1],
-              outputRange: [1, 1.08],
-            })
-          ),
-        },
-      ],
-    }),
-    [pressScale, progress]
-  );
-
-  const activePillStyle = useMemo(
-    () => ({
-      opacity: progress,
-      transform: [
-        {
-          scaleX: progress.interpolate({
-            inputRange: [0, 1],
-            outputRange: [0.58, 1],
-          }),
-        },
-      ],
-    }),
-    [progress]
-  );
-
-  const indicatorStyle = useMemo(
-    () => ({
-      opacity: progress,
-      transform: [
-        {
-          scaleX: progress.interpolate({
-            inputRange: [0, 1],
-            outputRange: [0, 1],
-          }),
-        },
-      ],
-    }),
-    [progress]
-  );
-
-  function animatePress(toValue: number) {
-    Animated.spring(pressScale, {
-      toValue,
-      damping: 18,
-      stiffness: 320,
-      mass: 0.55,
-      useNativeDriver: true,
-    }).start();
-  }
-
-  const inactiveColor = dark ? "#91A4B8" : "#64748B";
-  const titleColor = active
-    ? dark
-      ? COLORS.white
-      : "#172033"
-    : inactiveColor;
-
-  return (
-    <Pressable
-      accessibilityRole="tab"
-      accessibilityState={{ selected: active }}
-      accessibilityLabel={`${item.title} tab`}
-      hitSlop={4}
-      onPress={onPress}
-      onPressIn={() => animatePress(0.9)}
-      onPressOut={() => animatePress(1)}
-      style={styles.item}
-    >
-      <View style={styles.itemContent}>
-        <Animated.View
-          pointerEvents="none"
-          style={[
-            styles.activePill,
-            dark ? styles.activePillDark : styles.activePillLight,
-            activePillStyle,
-          ]}
-        />
-
-        <Animated.View style={[styles.iconWrap, animatedIconStyle]}>
-          <SymbolView
-            name={item.icon}
-            size={23}
-            weight={active ? "bold" : "medium"}
-            tintColor={active ? COLORS.primary : inactiveColor}
-          />
-        </Animated.View>
-
-        <Text numberOfLines={1} style={[styles.title, { color: titleColor }]}>
-          {item.title}
-        </Text>
-
-        <Animated.View
-          pointerEvents="none"
-          style={[styles.activeIndicator, indicatorStyle]}
-        />
-      </View>
-    </Pressable>
-  );
-}
-
-export default function BottomNavigation({
-  activeKey,
-  onChange,
-  onNavigate,
-}: BottomNavigationProps) {
+export default function BottomNavigation({ activeKey, onChange }: BottomNavigationProps) {
   const router = useRouter();
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
-  const colorScheme = useColorScheme();
-  const dark = colorScheme === "dark";
-
-  const resolvedActiveKey =
-    activeKey ??
-    ITEMS.find((item) => matchesPath(pathname, item.matchPaths))?.key ??
-    "more";
+  const resolvedActiveKey = activeKey ?? ITEMS.find((item) => matchesPath(pathname, item.matchPaths))?.key;
 
   function handleNavigation(item: NavigationItem) {
     onChange?.(item.key);
-    onNavigate?.(item.key);
-
-    if (!matchesPath(pathname, item.matchPaths)) {
-      router.replace(item.route);
-    }
+    if (!matchesPath(pathname, item.matchPaths)) router.replace(item.route);
   }
 
-  const floatingBarStyle: ViewStyle = {
-    backgroundColor: dark ? "rgba(7, 20, 34, 0.97)" : "rgba(255,255,255,0.98)",
-    borderColor: dark ? "rgba(148,163,184,0.20)" : "rgba(15,23,42,0.10)",
-  };
-
   return (
-    <View
-      accessibilityRole="tablist"
-      style={[
-        styles.safeContainer,
-        {
-          paddingBottom: Math.max(insets.bottom, 8),
-        },
-      ]}
-    >
-      <View style={[styles.container, floatingBarStyle]}>
-        <View
-          pointerEvents="none"
-          style={[
-            styles.topHighlight,
-            dark ? styles.topHighlightDark : styles.topHighlightLight,
-          ]}
-        />
-
-        {ITEMS.map((item) => (
-          <NavigationButton
-            key={item.key}
-            item={item}
-            active={item.key === resolvedActiveKey}
-            dark={dark}
-            onPress={() => handleNavigation(item)}
-          />
-        ))}
+    <View style={[styles.safeArea, { paddingBottom: Math.max(insets.bottom, 10) }]}>
+      <View accessibilityRole="tablist" style={styles.container}>
+        {ITEMS.map((item) => {
+          const active = item.key === resolvedActiveKey;
+          return (
+            <Pressable
+              key={item.key}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: active }}
+              accessibilityLabel={`${item.title} tab`}
+              onPress={() => handleNavigation(item)}
+              style={({ pressed }) => [styles.item, pressed && styles.pressed]}
+            >
+              <View style={[styles.iconContainer, active && styles.activeIconContainer]}>
+                <Text style={[styles.icon, item.key === "more" && styles.moreIcon, active && styles.activeIcon]}>
+                  {item.icon}
+                </Text>
+              </View>
+              <Text numberOfLines={1} style={[styles.title, active && styles.activeTitle]}>
+                {item.title}
+              </Text>
+              {active ? <View style={styles.activeIndicator} /> : null}
+            </Pressable>
+          );
+        })}
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeContainer: {
-    backgroundColor: "transparent",
+  safeArea: {
     paddingHorizontal: 12,
-    paddingTop: 7,
+    paddingTop: 8,
+    backgroundColor: "transparent",
   },
   container: {
-    minHeight: 72,
+    minHeight: 70,
     flexDirection: "row",
     alignItems: "center",
-    overflow: "hidden",
+    paddingHorizontal: 7,
+    paddingVertical: 6,
     borderRadius: 25,
+    backgroundColor: "rgba(255,255,255,0.97)",
     borderWidth: 1,
-    paddingHorizontal: 5,
-    paddingVertical: 5,
+    borderColor: "#D9E4EF",
     ...SHADOW,
-    shadowOpacity: 0.22,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 14,
-  },
-  topHighlight: {
-    position: "absolute",
-    top: 0,
-    left: 24,
-    right: 24,
-    height: 1,
-  },
-  topHighlightDark: {
-    backgroundColor: "rgba(255,255,255,0.14)",
-  },
-  topHighlightLight: {
-    backgroundColor: "rgba(255,255,255,0.96)",
   },
   item: {
     flex: 1,
-    minWidth: 0,
-    minHeight: 60,
-    borderRadius: RADIUS.xl,
-  },
-  itemContent: {
-    flex: 1,
+    minHeight: 57,
     alignItems: "center",
     justifyContent: "center",
-    overflow: "hidden",
-    borderRadius: RADIUS.xl,
-    paddingTop: 6,
-    paddingBottom: 5,
+    marginHorizontal: 2,
+    borderRadius: RADIUS.lg,
   },
-  activePill: {
-    position: "absolute",
-    top: 3,
-    width: 52,
-    height: 35,
+  iconContainer: {
+    minWidth: 40,
+    height: 31,
+    alignItems: "center",
+    justifyContent: "center",
     borderRadius: RADIUS.round,
+  },
+  activeIconContainer: {
+    minWidth: 48,
+    backgroundColor: COLORS.primarySoft,
     borderWidth: 1,
+    borderColor: "rgba(227,38,46,0.18)",
   },
-  activePillDark: {
-    backgroundColor: "rgba(220,38,38,0.16)",
-    borderColor: "rgba(248,113,113,0.28)",
+  icon: {
+    color: "#718499",
+    fontSize: 21,
+    fontWeight: "900",
+    lineHeight: 24,
   },
-  activePillLight: {
-    backgroundColor: "rgba(220,38,38,0.09)",
-    borderColor: "rgba(220,38,38,0.16)",
+  moreIcon: {
+    fontSize: 16,
+    letterSpacing: 1.5,
   },
-  iconWrap: {
-    width: 38,
-    height: 27,
-    alignItems: "center",
-    justifyContent: "center",
+  activeIcon: {
+    color: COLORS.primary,
   },
   title: {
-    marginTop: 1,
-    maxWidth: "100%",
-    paddingHorizontal: 2,
-    fontSize: 9.5,
-    fontWeight: "800",
-    letterSpacing: 0.05,
-    textAlign: "center",
+    marginTop: 2,
+    color: "#718499",
+    fontSize: 9,
+    fontWeight: "700",
+  },
+  activeTitle: {
+    color: COLORS.navy,
+    fontWeight: "900",
   },
   activeIndicator: {
     position: "absolute",
@@ -408,5 +170,9 @@ const styles = StyleSheet.create({
     height: 3,
     borderRadius: RADIUS.round,
     backgroundColor: COLORS.primary,
+  },
+  pressed: {
+    opacity: 0.72,
+    transform: [{ scale: 0.96 }],
   },
 });

@@ -301,7 +301,7 @@ const styles = StyleSheet.create({
   },
 
   customerName: {
-    color: COLORS.white,
+    color: COLORS.text,
     fontSize: 16,
     fontWeight: "900",
   },
@@ -419,17 +419,25 @@ const styles = StyleSheet.create({
   },
 
   callButton: {
+    minWidth: 62,
+    alignItems: "center",
     paddingHorizontal: 13,
     paddingVertical: 9,
     borderRadius: RADIUS.sm,
-    backgroundColor: COLORS.finance,
+    backgroundColor: "#2563EB",
+    borderWidth: 1,
+    borderColor: "#1D4ED8",
   },
 
   whatsappButton: {
+    minWidth: 82,
+    alignItems: "center",
     paddingHorizontal: 13,
     paddingVertical: 9,
     borderRadius: RADIUS.sm,
-    backgroundColor: COLORS.success,
+    backgroundColor: "#16A34A",
+    borderWidth: 1,
+    borderColor: "#15803D",
   },
 
   actionText: {
