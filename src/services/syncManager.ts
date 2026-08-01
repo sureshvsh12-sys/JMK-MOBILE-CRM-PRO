@@ -23,6 +23,10 @@ const ENTITY_KEYS: Record<SyncEntity, string> = {
   notifications: "jmk_mobile_notifications",
 };
 
+const MAX_ATTEMPTS = 5;
+const MAX_BATCHES_PER_RUN = 6;
+let syncInFlight: Promise<SyncResult> | null = null;
+
 async function collectPayload(): Promise<Record<SyncEntity, unknown[]>> {
   const entries = await AsyncStorage.multiGet(Object.values(ENTITY_KEYS));
   const byKey = new Map(entries);
@@ -30,6 +34,7 @@ async function collectPayload(): Promise<Record<SyncEntity, unknown[]>> {
 
   (Object.keys(ENTITY_KEYS) as SyncEntity[]).forEach((entity) => {
     const value = byKey.get(ENTITY_KEYS[entity]);
+
     try {
       const parsed = value ? JSON.parse(value) : [];
       payload[entity] = Array.isArray(parsed) ? parsed : [];
@@ -50,6 +55,29 @@ function createQueueItem(payload: Record<SyncEntity, unknown[]>): SyncQueueItem 
   };
 }
 
+function hasSyncData(payload: Record<SyncEntity, unknown[]>): boolean {
+  return (Object.keys(payload) as SyncEntity[]).some(
+    (entity) => payload[entity].length > 0
+  );
+}
+
+function payloadFingerprint(payload: Record<SyncEntity, unknown[]>): string {
+  return (Object.keys(payload) as SyncEntity[])
+    .map((entity) => `${entity}:${payload[entity].length}`)
+    .join("|");
+}
+
+function dedupeBatches(batches: SyncQueueItem[]): SyncQueueItem[] {
+  const seen = new Set<string>();
+
+  return batches.filter((batch) => {
+    const fingerprint = payloadFingerprint(batch.payload);
+    if (seen.has(fingerprint)) return false;
+    seen.add(fingerprint);
+    return true;
+  });
+}
+
 async function sendBatch(apiBaseUrl: string, batch: SyncQueueItem): Promise<void> {
   await postJson(apiBaseUrl, "/api/mobile/sync", {
     app: "JMK Mobile CRM PRO Enterprise",
@@ -60,17 +88,38 @@ async function sendBatch(apiBaseUrl: string, batch: SyncQueueItem): Promise<void
   });
 }
 
-export async function syncNow(): Promise<SyncResult> {
+async function performSync(): Promise<SyncResult> {
   const config = await getSyncConfig();
   const apiBaseUrl = config.apiBaseUrl.trim().replace(/\/$/, "");
 
   if (!apiBaseUrl) {
-    return { success: false, queued: false, message: "API URL configure nahi hai." };
+    return {
+      success: false,
+      queued: false,
+      message: "API URL configure nahi hai.",
+    };
   }
 
-  const queued = await getSyncQueue();
-  const currentBatch = createQueueItem(await collectPayload());
-  const batches = [...queued, currentBatch];
+  const queued = (await getSyncQueue()).filter(
+    (batch) => batch.attempts < MAX_ATTEMPTS
+  );
+  const currentPayload = await collectPayload();
+  const batches = dedupeBatches([
+    ...queued,
+    ...(hasSyncData(currentPayload) ? [createQueueItem(currentPayload)] : []),
+  ]).slice(0, MAX_BATCHES_PER_RUN);
+
+  if (batches.length === 0) {
+    const syncedAt = new Date().toISOString();
+    await saveSyncConfig({ ...config, apiBaseUrl, lastSyncAt: syncedAt });
+    return {
+      success: true,
+      queued: false,
+      message: "Sync ke liye koi pending data nahi hai.",
+      syncedAt,
+    };
+  }
+
   const failedBatches: SyncQueueItem[] = [];
   let successfulBatches = 0;
   let firstError = "";
@@ -81,21 +130,30 @@ export async function syncNow(): Promise<SyncResult> {
       successfulBatches += 1;
     } catch (error) {
       if (!firstError) {
-        firstError = error instanceof Error ? error.message : "Sync request fail hua";
+        firstError =
+          error instanceof Error ? error.message : "Sync request fail hua";
       }
-      failedBatches.push({ ...batch, attempts: batch.attempts + 1 });
+
+      const attempts = batch.attempts + 1;
+      if (attempts < MAX_ATTEMPTS) {
+        failedBatches.push({ ...batch, attempts });
+      }
     }
   }
 
-  await replaceSyncQueue(failedBatches);
+  const untouchedQueuedBatches = queued.slice(MAX_BATCHES_PER_RUN);
+  await replaceSyncQueue([...failedBatches, ...untouchedQueuedBatches]);
 
   if (failedBatches.length === 0) {
     const syncedAt = new Date().toISOString();
     await saveSyncConfig({ ...config, apiBaseUrl, lastSyncAt: syncedAt });
     return {
       success: true,
-      queued: false,
-      message: `${successfulBatches} sync batch successfully complete hue.`,
+      queued: untouchedQueuedBatches.length > 0,
+      message:
+        untouchedQueuedBatches.length > 0
+          ? `${successfulBatches} batch sync hue. ${untouchedQueuedBatches.length} batch next run ke liye pending hain.`
+          : `${successfulBatches} sync batch successfully complete hue.`,
       syncedAt,
     };
   }
@@ -110,7 +168,17 @@ export async function syncNow(): Promise<SyncResult> {
 
   return {
     success: false,
-    queued: true,
-    message: `${firstError}. ${failedBatches.length} batch offline queue me safe hain.`,
+    queued: failedBatches.length > 0,
+    message: `${firstError || "Sync request fail hua"}. ${failedBatches.length} batch offline queue me safe hain.`,
   };
+}
+
+export function syncNow(): Promise<SyncResult> {
+  if (syncInFlight) return syncInFlight;
+
+  syncInFlight = performSync().finally(() => {
+    syncInFlight = null;
+  });
+
+  return syncInFlight;
 }

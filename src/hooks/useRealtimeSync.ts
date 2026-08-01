@@ -11,7 +11,8 @@ import { syncNow } from "../services/syncManager";
 import { getSyncConfig } from "../storage/syncStorage";
 
 const AUTO_SYNC_INTERVAL_MS = 5 * 60 * 1000;
-const REALTIME_SYNC_DEBOUNCE_MS = 1500;
+const REALTIME_SYNC_DEBOUNCE_MS = 1400;
+const RETRY_DELAYS_MS = [5000, 15000, 30000, 60000] as const;
 
 export type RealtimeSyncState = {
   realtimeStatus: RealtimeStatus;
@@ -20,6 +21,12 @@ export type RealtimeSyncState = {
   lastSyncAt: string;
   error: string | null;
 };
+
+function toErrorMessage(reason: unknown) {
+  return reason instanceof Error
+    ? reason.message
+    : "Automatic sync complete nahi ho saka.";
+}
 
 export function useRealtimeSync(): RealtimeSyncState {
   const [realtimeStatus, setRealtimeStatus] =
@@ -32,43 +39,87 @@ export function useRealtimeSync(): RealtimeSyncState {
 
   const mountedRef = useRef(true);
   const syncInFlightRef = useRef(false);
+  const retryAttemptRef = useRef(0);
+  const appStateRef = useRef<AppStateStatus>(AppState.currentState);
   const realtimeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearRetryTimer = useCallback(() => {
+    if (retryTimerRef.current) {
+      clearTimeout(retryTimerRef.current);
+      retryTimerRef.current = null;
+    }
+  }, []);
+
+  const scheduleRetry = useCallback((retry: () => void) => {
+    clearRetryTimer();
+
+    const index = Math.min(
+      retryAttemptRef.current,
+      RETRY_DELAYS_MS.length - 1
+    );
+    const delay = RETRY_DELAYS_MS[index];
+    retryAttemptRef.current += 1;
+
+    retryTimerRef.current = setTimeout(() => {
+      retryTimerRef.current = null;
+      if (mountedRef.current && AppState.currentState === "active") {
+        retry();
+      }
+    }, delay);
+  }, [clearRetryTimer]);
 
   const runAutomaticSync = useCallback(async () => {
-    if (syncInFlightRef.current) return;
+    if (syncInFlightRef.current || !mountedRef.current) return;
 
-    const config = await getSyncConfig();
-    if (!config.autoSyncEnabled || !config.apiBaseUrl.trim()) return;
+    let config;
+    try {
+      config = await getSyncConfig();
+    } catch (reason) {
+      if (mountedRef.current) setError(toErrorMessage(reason));
+      return;
+    }
+
+    if (!config.autoSyncEnabled || !config.apiBaseUrl.trim()) {
+      clearRetryTimer();
+      retryAttemptRef.current = 0;
+      return;
+    }
 
     syncInFlightRef.current = true;
-
-    if (mountedRef.current) {
-      setSyncing(true);
-      setError(null);
-    }
+    setSyncing(true);
+    setError(null);
 
     try {
       const result = await syncNow();
       if (!mountedRef.current) return;
 
       if (result.success) {
+        clearRetryTimer();
+        retryAttemptRef.current = 0;
         setLastSyncAt(result.syncedAt ?? new Date().toISOString());
-      } else if (!result.queued) {
+        setError(null);
+        return;
+      }
+
+      if (!result.queued) {
         setError(result.message);
+        scheduleRetry(() => {
+          void runAutomaticSync();
+        });
       }
     } catch (reason) {
       if (mountedRef.current) {
-        setError(
-          reason instanceof Error
-            ? reason.message
-            : "Automatic sync complete nahi ho saka."
-        );
+        setError(toErrorMessage(reason));
+        scheduleRetry(() => {
+          void runAutomaticSync();
+        });
       }
     } finally {
       syncInFlightRef.current = false;
       if (mountedRef.current) setSyncing(false);
     }
-  }, []);
+  }, [clearRetryTimer, scheduleRetry]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -76,7 +127,9 @@ export function useRealtimeSync(): RealtimeSyncState {
     const unsubscribeRealtime = subscribeToCrmRealtime(
       (change) => {
         if (!mountedRef.current) return;
+
         setLastChange(change);
+        setError(null);
 
         void handleRealtimeAlert(change).catch((reason) => {
           console.error("Realtime notification failed:", reason);
@@ -87,16 +140,28 @@ export function useRealtimeSync(): RealtimeSyncState {
         }
 
         realtimeTimerRef.current = setTimeout(() => {
+          realtimeTimerRef.current = null;
           void runAutomaticSync();
         }, REALTIME_SYNC_DEBOUNCE_MS);
       },
       (status) => {
-        if (mountedRef.current) setRealtimeStatus(status);
+        if (!mountedRef.current) return;
+        setRealtimeStatus(status);
+
+        if (status === "connected") {
+          setError(null);
+          retryAttemptRef.current = 0;
+        }
       }
     );
 
     const handleAppStateChange = (nextState: AppStateStatus) => {
-      if (nextState === "active") {
+      const previousState = appStateRef.current;
+      appStateRef.current = nextState;
+
+      if (nextState === "active" && previousState !== "active") {
+        clearRetryTimer();
+        retryAttemptRef.current = 0;
         void runAutomaticSync();
       }
     };
@@ -116,15 +181,18 @@ export function useRealtimeSync(): RealtimeSyncState {
 
     return () => {
       mountedRef.current = false;
+      syncInFlightRef.current = false;
       unsubscribeRealtime();
       appStateSubscription.remove();
       clearInterval(interval);
+      clearRetryTimer();
 
       if (realtimeTimerRef.current) {
         clearTimeout(realtimeTimerRef.current);
+        realtimeTimerRef.current = null;
       }
     };
-  }, [runAutomaticSync]);
+  }, [clearRetryTimer, runAutomaticSync]);
 
   return {
     realtimeStatus,

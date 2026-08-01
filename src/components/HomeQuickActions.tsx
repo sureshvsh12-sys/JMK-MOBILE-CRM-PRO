@@ -8,38 +8,44 @@ type HomeAction = {
   subtitle: string;
   icon: string;
   route: Href;
+  accentColor: string;
 };
 
 const ACTIONS: readonly HomeAction[] = [
   {
-    title: "Search",
-    subtitle: "Find CRM records",
-    icon: "🔎",
+    title: "Global Search",
+    subtitle: "Find every CRM record",
+    icon: "⌕",
     route: "/search",
+    accentColor: "#60A5FA",
   },
   {
-    title: "Employees",
-    subtitle: "Manage team",
-    icon: "🧑‍💼",
+    title: "Team",
+    subtitle: "Employees and access",
+    icon: "♟",
     route: "/employees",
+    accentColor: "#A78BFA",
   },
   {
     title: "Reports",
-    subtitle: "View performance",
-    icon: "📊",
+    subtitle: "Business performance",
+    icon: "▥",
     route: "/reports",
+    accentColor: "#34D399",
   },
   {
-    title: "Notifications",
-    subtitle: "Review alerts",
-    icon: "🔔",
+    title: "Alerts",
+    subtitle: "Notifications center",
+    icon: "◈",
     route: "/notifications",
+    accentColor: "#F59E0B",
   },
   {
     title: "Settings",
-    subtitle: "Configure CRM",
-    icon: "⚙️",
+    subtitle: "CRM preferences",
+    icon: "⚙",
     route: "/settings",
+    accentColor: "#94A3B8",
   },
 ];
 
@@ -56,8 +62,18 @@ export default function HomeQuickActions() {
           onPress={() => router.push(action.route)}
           style={({ pressed }) => [styles.action, pressed && styles.pressed]}
         >
-          <View style={styles.iconContainer}>
-            <Text style={styles.icon}>{action.icon}</Text>
+          <View
+            style={[
+              styles.iconContainer,
+              {
+                backgroundColor: `${action.accentColor}1D`,
+                borderColor: `${action.accentColor}45`,
+              },
+            ]}
+          >
+            <Text style={[styles.icon, { color: action.accentColor }]}>
+              {action.icon}
+            </Text>
           </View>
 
           <View style={styles.copy}>
@@ -69,7 +85,7 @@ export default function HomeQuickActions() {
             </Text>
           </View>
 
-          <Text style={styles.chevron}>›</Text>
+          <Text style={[styles.chevron, { color: action.accentColor }]}>›</Text>
         </Pressable>
       ))}
     </View>
@@ -83,17 +99,18 @@ const styles = StyleSheet.create({
     gap: SPACING.md,
   },
   action: {
-    minWidth: 150,
+    minWidth: 156,
     flexGrow: 1,
     flexBasis: "46%",
-    minHeight: 86,
+    minHeight: 88,
     flexDirection: "row",
     alignItems: "center",
     padding: SPACING.md,
+    overflow: "hidden",
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: "rgba(148,163,184,0.18)",
     borderRadius: RADIUS.lg,
-    backgroundColor: COLORS.surface,
+    backgroundColor: "rgba(13,27,45,0.92)",
   },
   iconContainer: {
     width: 42,
@@ -102,10 +119,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginRight: SPACING.md,
     borderRadius: RADIUS.md,
-    backgroundColor: COLORS.surfaceLight,
+    borderWidth: 1,
   },
   icon: {
-    fontSize: 21,
+    fontSize: 22,
+    fontWeight: "900",
   },
   copy: {
     flex: 1,
@@ -114,7 +132,7 @@ const styles = StyleSheet.create({
   title: {
     color: COLORS.text,
     fontSize: 13,
-    fontWeight: "800",
+    fontWeight: "900",
   },
   subtitle: {
     marginTop: 4,
@@ -124,12 +142,11 @@ const styles = StyleSheet.create({
   },
   chevron: {
     marginLeft: SPACING.sm,
-    color: COLORS.primary,
     fontSize: 23,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   pressed: {
-    opacity: 0.72,
-    transform: [{ scale: 0.98 }],
+    opacity: 0.76,
+    transform: [{ scale: 0.975 }],
   },
 });

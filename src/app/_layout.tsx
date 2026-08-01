@@ -2,6 +2,7 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 
 import AppErrorBoundary from "../components/AppErrorBoundary";
+import ForegroundNotificationPopup from "../components/ForegroundNotificationPopup";
 import SyncLifecycle from "../components/SyncLifecycle";
 import { COLORS } from "../constants/theme";
 import { AuthProvider } from "../context/AuthContext";
@@ -11,6 +12,7 @@ export default function RootLayout() {
     <AppErrorBoundary>
       <AuthProvider>
         <SyncLifecycle />
+        <ForegroundNotificationPopup />
         <StatusBar style="light" backgroundColor="#06111F" />
         <Stack
           screenOptions={{

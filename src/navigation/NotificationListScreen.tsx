@@ -12,16 +12,16 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import AppHeader from "../../components/AppHeader";
-import { COLORS, RADIUS, SPACING } from "../../constants/theme";
+import AppHeader from "../components/AppHeader";
+import { COLORS, RADIUS, SPACING } from "../constants/theme";
 import {
   type NotificationFilter,
   useNotifications,
-} from "../../hooks/useNotifications";
+} from "../hooks/useNotifications";
 import {
   type AppNotification,
   type NotificationModule,
-} from "../../storage/notificationStorage";
+} from "../storage/notificationStorage";
 
 const FILTERS: NotificationFilter[] = [
   "All",

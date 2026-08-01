@@ -31,6 +31,7 @@ import {
 } from "../../storage/settingsStorage";
 import type { AppSettings } from "../../storage/settingsStorage";
 import { useAuth } from "../../context/AuthContext";
+import { useAppTheme, type ThemeMode } from "../../context/ThemeContext";
 import { useSync } from "../../hooks/useSync";
 
 const SEGMENTS: AppSettings["defaultSegment"][] = [
@@ -42,6 +43,7 @@ const SEGMENTS: AppSettings["defaultSegment"][] = [
 export default function SettingsScreen() {
   const router = useRouter();
   const { signOut } = useAuth();
+  const { themeMode, setThemeMode, palette } = useAppTheme();
 
   const [settings, setSettings] = useState<AppSettings | null>(
     null
@@ -277,7 +279,7 @@ export default function SettingsScreen() {
 
   if (!settings) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: palette.background }]}>
         <AppHeader
           segment="Settings"
           onMenuPress={goHome}
@@ -294,7 +296,7 @@ export default function SettingsScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top"]}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: palette.background }]} edges={["top"]}>
       <AppHeader
         segment="Settings"
         onMenuPress={goHome}
@@ -334,8 +336,8 @@ export default function SettingsScreen() {
         contentContainerStyle={styles.container}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.title}>Enterprise Settings</Text>
-        <Text style={styles.subtitle}>
+        <Text style={[styles.title, { color: palette.text }]}>Enterprise Settings</Text>
+        <Text style={[styles.subtitle, { color: palette.textMuted }]}>
           JMK Group profile, preferences aur offline backup manage karein.
         </Text>
 
@@ -425,14 +427,33 @@ export default function SettingsScreen() {
             }
           />
 
-          <SettingSwitch
-            label="Dark Theme"
-            description="Premium JMK dark interface."
-            value={settings.darkMode}
-            onValueChange={(value) =>
-              updateField("darkMode", value)
-            }
-          />
+          <View style={styles.themeBlock}>
+            <Text style={[styles.themeLabel, { color: palette.text }]}>App Theme</Text>
+            <Text style={[styles.themeDescription, { color: palette.textMuted }]}>Light, Dark ya phone ke System theme ka use karein.</Text>
+            <View style={styles.themeRow}>
+              {(["system", "light", "dark"] as ThemeMode[]).map((mode) => {
+                const selected = themeMode === mode;
+                return (
+                  <Pressable
+                    key={mode}
+                    onPress={() => void setThemeMode(mode)}
+                    style={[
+                      styles.themeOption,
+                      { backgroundColor: palette.surfaceSoft, borderColor: palette.border },
+                      selected && { backgroundColor: palette.primarySoft, borderColor: palette.primary },
+                    ]}
+                  >
+                    <Text style={[styles.themeIcon, { color: selected ? palette.primary : palette.text }]}>
+                      {mode === "system" ? "◐" : mode === "light" ? "☀" : "☾"}
+                    </Text>
+                    <Text style={[styles.themeOptionText, { color: selected ? palette.primary : palette.text }]}>
+                      {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
         </Section>
 
         <Pressable
@@ -561,9 +582,10 @@ type SectionProps = {
 };
 
 function Section({ title, children }: PropsWithChildren<SectionProps>) {
+  const { palette } = useAppTheme();
   return (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>{title}</Text>
+    <View style={[styles.section, { backgroundColor: palette.surface, borderColor: palette.border }]}>
+      <Text style={[styles.sectionTitle, { color: palette.text }]}>{title}</Text>
       {children}
     </View>
   );
@@ -584,18 +606,20 @@ function Field({
   keyboardType = "default",
   multiline = false,
 }: FieldProps) {
+  const { palette } = useAppTheme();
   return (
     <View style={styles.field}>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={[styles.label, { color: palette.textSoft }]}>{label}</Text>
 
       <TextInput
         value={value}
         onChangeText={onChangeText}
         keyboardType={keyboardType}
         multiline={multiline}
-        placeholderTextColor={COLORS.textMuted}
+        placeholderTextColor={palette.textMuted}
         style={[
           styles.input,
+          { backgroundColor: palette.surfaceSoft, borderColor: palette.border, color: palette.text },
           multiline && styles.multilineInput,
         ]}
       />
@@ -616,11 +640,12 @@ function SettingSwitch({
   value,
   onValueChange,
 }: SettingSwitchProps) {
+  const { palette } = useAppTheme();
   return (
     <View style={styles.switchRow}>
       <View style={styles.switchTextContainer}>
-        <Text style={styles.switchLabel}>{label}</Text>
-        <Text style={styles.switchDescription}>
+        <Text style={[styles.switchLabel, { color: palette.text }]}>{label}</Text>
+        <Text style={[styles.switchDescription, { color: palette.textMuted }]}>
           {description}
         </Text>
       </View>
@@ -629,8 +654,8 @@ function SettingSwitch({
         value={value}
         onValueChange={onValueChange}
         trackColor={{
-          false: COLORS.surfaceLight,
-          true: COLORS.primary,
+          false: palette.surfaceSoft,
+          true: palette.primary,
         }}
       />
     </View>
@@ -948,4 +973,12 @@ const styles = StyleSheet.create({
     fontSize: 9,
     lineHeight: 15,
   },
+
+  themeBlock: { marginTop: SPACING.md },
+  themeLabel: { fontSize: 14, fontWeight: "900" },
+  themeDescription: { marginTop: 4, fontSize: 11, lineHeight: 17 },
+  themeRow: { marginTop: SPACING.md, flexDirection: "row", gap: SPACING.sm },
+  themeOption: { flex: 1, minHeight: 72, alignItems: "center", justifyContent: "center", borderRadius: RADIUS.md, borderWidth: 1 },
+  themeIcon: { fontSize: 22, fontWeight: "900" },
+  themeOptionText: { marginTop: 5, fontSize: 11, fontWeight: "800" },
 });

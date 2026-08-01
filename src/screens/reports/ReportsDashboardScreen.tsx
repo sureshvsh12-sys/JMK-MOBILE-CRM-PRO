@@ -13,14 +13,19 @@ import { useFocusEffect, useRouter, type Href } from "expo-router";
 import AppHeader from "../../components/AppHeader";
 import ReportBarChart from "../../components/reports/ReportBarChart";
 import ReportKpiCard from "../../components/reports/ReportKpiCard";
-import { COLORS, RADIUS, SPACING } from "../../constants/theme";
+import { COLORS, RADIUS, SHADOW, SPACING } from "../../constants/theme";
 import { getReportsSummary } from "../../services/reportsService";
 import {
   calculateReportsSummary,
   createBusinessMix,
   createPipelineMix,
   formatCurrency,
+  type SegmentReport,
 } from "../../utils/reportCalculations";
+
+const FINANCE = "#10B981";
+const ASSETS = "#D4A72C";
+const SOLAR = "#F97316";
 
 const MODULE_ROUTES = {
   rawContacts: "/raw-contacts",
@@ -33,6 +38,17 @@ const MODULE_ROUTES = {
 } satisfies Record<string, Href>;
 
 const EMPTY_SUMMARY = calculateReportsSummary([], [], [], [], [], [], []);
+
+function percentage(value: number, total: number): number {
+  if (total <= 0) return 0;
+  return Math.min(Math.max((value / total) * 100, 0), 100);
+}
+
+function segmentColor(segment: SegmentReport["segment"]): string {
+  if (segment === "Finance") return FINANCE;
+  if (segment === "Solar") return SOLAR;
+  return ASSETS;
+}
 
 export default function ReportsDashboardScreen() {
   const router = useRouter();
@@ -64,15 +80,21 @@ export default function ReportsDashboardScreen() {
 
   const businessMix = useMemo(() => createBusinessMix(summary), [summary]);
   const pipelineMix = useMemo(() => createPipelineMix(summary), [summary]);
+  const rawToLeadRate = percentage(summary.leads, summary.rawContacts);
+  const collectionRate = percentage(summary.bookingReceived, summary.bookingValue);
+  const solarCollectionRate = percentage(
+    Math.max(summary.solarValue - summary.solarBalance, 0),
+    summary.solarValue
+  );
 
   return (
     <View style={styles.page}>
-      <AppHeader segment="Enterprise Reports" onMenuPress={() => router.back()} />
+      <AppHeader segment="Enterprise Analytics" onMenuPress={() => router.back()} />
 
       {loading ? (
         <View style={styles.loader}>
           <ActivityIndicator size="large" color={COLORS.primary} />
-          <Text style={styles.loaderText}>Preparing reports...</Text>
+          <Text style={styles.loaderText}>Preparing enterprise analytics...</Text>
         </View>
       ) : (
         <ScrollView
@@ -86,66 +108,134 @@ export default function ReportsDashboardScreen() {
           }
         >
           <View style={styles.hero}>
+            <View style={styles.heroGlowOne} />
+            <View style={styles.heroGlowTwo} />
             <Text style={styles.eyebrow}>JMK CRM PRO ENTERPRISE</Text>
-            <Text style={styles.title}>Business Reports</Text>
+            <Text style={styles.title}>Business Analytics</Text>
             <Text style={styles.description}>
-              Raw Contacts se Customer conversion, follow-ups aur business value ka combined offline report.
+              Finance, Assets aur Solar ka live performance snapshot — Raw Contacts se Customer conversion tak.
             </Text>
+            <View style={styles.heroMetrics}>
+              <HeroMetric label="Conversion" value={`${summary.conversionRate.toFixed(1)}%`} />
+              <HeroMetric label="Net Balance" value={formatCurrency(summary.netBalance)} />
+              <HeroMetric label="Due Today" value={String(summary.dueTodayFollowUps)} />
+            </View>
           </View>
 
           {error ? <Text style={styles.error}>{error}</Text> : null}
 
-          <Text style={styles.sectionTitle}>Sales Pipeline</Text>
+          <SectionTitle title="Pipeline Health" subtitle="Raw Contact → Lead → Customer" />
           <View style={styles.grid}>
-            <ReportKpiCard label="Raw Contacts" value={String(summary.rawContacts)} caption={`${summary.interestedRawContacts} interested`} icon="☎" />
-            <ReportKpiCard label="Active Leads" value={String(summary.activeLeads)} caption={`${summary.leads} total leads`} icon="🎯" />
-            <ReportKpiCard label="Customers" value={String(summary.customers)} caption={`${summary.conversionRate.toFixed(1)}% conversion`} icon="👥" />
-            <ReportKpiCard label="Follow-ups" value={String(summary.pendingFollowUps)} caption={`${summary.overdueFollowUps} overdue`} icon="⏰" />
+            <ReportKpiCard
+              label="Raw Contacts"
+              value={String(summary.rawContacts)}
+              caption={`${summary.interestedRawContacts} interested contacts`}
+              icon="☎"
+              accentColor={ASSETS}
+              progress={percentage(summary.interestedRawContacts, summary.rawContacts)}
+            />
+            <ReportKpiCard
+              label="Active Leads"
+              value={String(summary.activeLeads)}
+              caption={`${summary.leads} total leads`}
+              icon="◎"
+              accentColor={FINANCE}
+              progress={rawToLeadRate}
+            />
+            <ReportKpiCard
+              label="Customers"
+              value={String(summary.customers)}
+              caption={`${summary.convertedLeads} converted leads`}
+              icon="👥"
+              accentColor={COLORS.info}
+              progress={summary.conversionRate}
+            />
+            <ReportKpiCard
+              label="Follow-ups"
+              value={String(summary.pendingFollowUps)}
+              caption={`${summary.overdueFollowUps} overdue • ${summary.dueTodayFollowUps} today`}
+              icon="◷"
+              accentColor={summary.overdueFollowUps > 0 ? COLORS.danger : COLORS.success}
+              progress={percentage(summary.dueTodayFollowUps, summary.pendingFollowUps)}
+            />
           </View>
 
-          <ReportBarChart title="Raw Contact → Customer Pipeline" data={pipelineMix} />
+          <ReportBarChart
+            title="Conversion Funnel"
+            subtitle="Current volume across the CRM lifecycle"
+            data={pipelineMix}
+            colors={[ASSETS, FINANCE, COLORS.info]}
+          />
 
-          <Text style={styles.sectionTitle}>Segment Performance</Text>
+          <SectionTitle title="Segment Performance" subtitle="Independent Finance, Assets and Solar pipelines" />
           <View style={styles.segmentList}>
             {summary.segments.map((item) => (
-              <View key={item.segment} style={styles.segmentCard}>
-                <Text style={styles.segmentName}>{item.segment}</Text>
-                <SummaryRow label="Raw Contacts" value={String(item.rawContacts)} />
-                <SummaryRow label="Leads" value={String(item.leads)} />
-                <SummaryRow label="Customers" value={String(item.customers)} />
-                <SummaryRow label="Lead Value" value={formatCurrency(item.leadValue)} last />
-              </View>
+              <SegmentCard key={item.segment} item={item} />
             ))}
           </View>
 
-          <Text style={styles.sectionTitle}>Business Value</Text>
+          <SectionTitle title="Revenue & Collections" subtitle="Business value and outstanding balance" />
           <View style={styles.grid}>
-            <ReportKpiCard label="Bookings" value={String(summary.bookings)} caption={formatCurrency(summary.bookingValue)} icon="🏠" />
-            <ReportKpiCard label="Total Income" value={formatCurrency(summary.income)} caption={`${formatCurrency(summary.expense)} expense`} icon="₹" />
-            <ReportKpiCard label="Solar Projects" value={String(summary.solarProjects)} caption={`${summary.solarCapacityKw.toLocaleString("en-IN")} kW capacity`} icon="☀" />
-            <ReportKpiCard label="Due Today" value={String(summary.dueTodayFollowUps)} caption="Pending follow-ups" icon="📅" />
+            <ReportKpiCard
+              label="Finance Net"
+              value={formatCurrency(summary.netBalance)}
+              caption={`${formatCurrency(summary.income)} income • ${formatCurrency(summary.expense)} expense`}
+              icon="₹"
+              accentColor={FINANCE}
+              progress={percentage(summary.netBalance, summary.income)}
+            />
+            <ReportKpiCard
+              label="Assets Bookings"
+              value={formatCurrency(summary.bookingValue)}
+              caption={`${formatCurrency(summary.bookingBalance)} pending`}
+              icon="⌂"
+              accentColor={ASSETS}
+              progress={collectionRate}
+            />
+            <ReportKpiCard
+              label="Solar Value"
+              value={formatCurrency(summary.solarValue)}
+              caption={`${summary.solarCapacityKw.toLocaleString("en-IN")} kW • ${formatCurrency(summary.solarBalance)} pending`}
+              icon="☀"
+              accentColor={SOLAR}
+              progress={solarCollectionRate}
+            />
           </View>
 
-          <ReportBarChart title="Business Value Mix" data={businessMix} />
+          <ReportBarChart
+            title="Business Value Mix"
+            subtitle="Segment-wise monetary value"
+            data={businessMix}
+            colors={[ASSETS, FINANCE, SOLAR]}
+          />
 
-          <Text style={styles.sectionTitle}>Collection & Balance</Text>
-          <View style={styles.detailCard}>
-            <SummaryRow label="Booking received" value={formatCurrency(summary.bookingReceived)} />
-            <SummaryRow label="Booking pending" value={formatCurrency(summary.bookingBalance)} />
-            <SummaryRow label="Finance net balance" value={formatCurrency(summary.netBalance)} />
-            <SummaryRow label="Solar project value" value={formatCurrency(summary.solarValue)} />
-            <SummaryRow label="Solar pending balance" value={formatCurrency(summary.solarBalance)} last />
+          <View style={styles.collectionCard}>
+            <Text style={styles.collectionTitle}>Collection Summary</Text>
+            <CollectionRow
+              label="Assets collection"
+              value={formatCurrency(summary.bookingReceived)}
+              total={formatCurrency(summary.bookingValue)}
+              progress={collectionRate}
+              color={ASSETS}
+            />
+            <CollectionRow
+              label="Solar collection"
+              value={formatCurrency(Math.max(summary.solarValue - summary.solarBalance, 0))}
+              total={formatCurrency(summary.solarValue)}
+              progress={solarCollectionRate}
+              color={SOLAR}
+            />
           </View>
 
-          <Text style={styles.sectionTitle}>Open Modules</Text>
+          <SectionTitle title="Open Modules" subtitle="Drill down into source records" />
           <View style={styles.actions}>
-            <ModuleButton label="Raw Contacts" onPress={() => router.push(MODULE_ROUTES.rawContacts)} />
-            <ModuleButton label="Leads" onPress={() => router.push(MODULE_ROUTES.leads)} />
-            <ModuleButton label="Customers" onPress={() => router.push(MODULE_ROUTES.customers)} />
-            <ModuleButton label="Follow-ups" onPress={() => router.push(MODULE_ROUTES.followups)} />
-            <ModuleButton label="Finance" onPress={() => router.push(MODULE_ROUTES.finance)} />
-            <ModuleButton label="Bookings" onPress={() => router.push(MODULE_ROUTES.bookings)} />
-            <ModuleButton label="Solar" onPress={() => router.push(MODULE_ROUTES.solar)} />
+            <ModuleButton label="Raw Contacts" accentColor={ASSETS} onPress={() => router.push(MODULE_ROUTES.rawContacts)} />
+            <ModuleButton label="Leads" accentColor={FINANCE} onPress={() => router.push(MODULE_ROUTES.leads)} />
+            <ModuleButton label="Customers" accentColor={COLORS.info} onPress={() => router.push(MODULE_ROUTES.customers)} />
+            <ModuleButton label="Follow-ups" accentColor={COLORS.warning} onPress={() => router.push(MODULE_ROUTES.followups)} />
+            <ModuleButton label="Finance" accentColor={FINANCE} onPress={() => router.push(MODULE_ROUTES.finance)} />
+            <ModuleButton label="Bookings" accentColor={ASSETS} onPress={() => router.push(MODULE_ROUTES.bookings)} />
+            <ModuleButton label="Solar" accentColor={SOLAR} onPress={() => router.push(MODULE_ROUTES.solar)} />
           </View>
         </ScrollView>
       )}
@@ -153,20 +243,107 @@ export default function ReportsDashboardScreen() {
   );
 }
 
-function SummaryRow({ label, value, last = false }: { label: string; value: string; last?: boolean }) {
+function HeroMetric({ label, value }: { label: string; value: string }) {
   return (
-    <View style={[styles.summaryRow, last && styles.summaryRowLast]}>
-      <Text style={styles.summaryLabel}>{label}</Text>
-      <Text style={styles.summaryValue}>{value}</Text>
+    <View style={styles.heroMetric}>
+      <Text numberOfLines={1} adjustsFontSizeToFit style={styles.heroMetricValue}>{value}</Text>
+      <Text style={styles.heroMetricLabel}>{label}</Text>
     </View>
   );
 }
 
-function ModuleButton({ label, onPress }: { label: string; onPress: () => void }) {
+function SectionTitle({ title, subtitle }: { title: string; subtitle: string }) {
+  return (
+    <View style={styles.sectionHeader}>
+      <Text style={styles.sectionTitle}>{title}</Text>
+      <Text style={styles.sectionSubtitle}>{subtitle}</Text>
+    </View>
+  );
+}
+
+function SegmentCard({ item }: { item: SegmentReport }) {
+  const color = segmentColor(item.segment);
+  const leadRate = percentage(item.leads, item.rawContacts);
+  const customerRate = percentage(item.customers, item.leads);
+
+  return (
+    <View style={[styles.segmentCard, { borderColor: `${color}66` }]}>
+      <View style={styles.segmentHeader}>
+        <View>
+          <Text style={[styles.segmentName, { color }]}>{item.segment}</Text>
+          <Text style={styles.segmentCaption}>Independent business pipeline</Text>
+        </View>
+        <View style={[styles.segmentBadge, { backgroundColor: `${color}1F` }]}>
+          <Text style={[styles.segmentBadgeText, { color }]}>{customerRate.toFixed(0)}%</Text>
+        </View>
+      </View>
+      <View style={styles.segmentMetrics}>
+        <MiniMetric label="Raw" value={String(item.rawContacts)} />
+        <MiniMetric label="Leads" value={String(item.leads)} />
+        <MiniMetric label="Customers" value={String(item.customers)} />
+        <MiniMetric label="Lead Value" value={formatCurrency(item.leadValue)} />
+      </View>
+      <View style={styles.segmentProgressRow}>
+        <Text style={styles.segmentProgressLabel}>Raw to Lead</Text>
+        <Text style={[styles.segmentProgressValue, { color }]}>{leadRate.toFixed(1)}%</Text>
+      </View>
+      <View style={styles.segmentTrack}>
+        <View style={[styles.segmentFill, { width: `${leadRate}%`, backgroundColor: color }]} />
+      </View>
+    </View>
+  );
+}
+
+function MiniMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.miniMetric}>
+      <Text numberOfLines={1} adjustsFontSizeToFit style={styles.miniMetricValue}>{value}</Text>
+      <Text style={styles.miniMetricLabel}>{label}</Text>
+    </View>
+  );
+}
+
+function CollectionRow({
+  label,
+  value,
+  total,
+  progress,
+  color,
+}: {
+  label: string;
+  value: string;
+  total: string;
+  progress: number;
+  color: string;
+}) {
+  return (
+    <View style={styles.collectionRow}>
+      <View style={styles.collectionHeader}>
+        <Text style={styles.collectionLabel}>{label}</Text>
+        <Text style={[styles.collectionPercent, { color }]}>{progress.toFixed(1)}%</Text>
+      </View>
+      <Text style={styles.collectionValue}>{value} / {total}</Text>
+      <View style={styles.collectionTrack}>
+        <View style={[styles.collectionFill, { width: `${progress}%`, backgroundColor: color }]} />
+      </View>
+    </View>
+  );
+}
+
+function ModuleButton({
+  label,
+  accentColor,
+  onPress,
+}: {
+  label: string;
+  accentColor: string;
+  onPress: () => void;
+}) {
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}>
+      <View style={[styles.actionDot, { backgroundColor: accentColor }]} />
       <Text style={styles.actionText}>{label}</Text>
-      <Text style={styles.actionArrow}>›</Text>
+      <Text style={[styles.actionArrow, { color: accentColor }]}>›</Text>
     </Pressable>
   );
 }
@@ -176,24 +353,58 @@ const styles = StyleSheet.create({
   content: { width: "100%", maxWidth: 960, alignSelf: "center", padding: SPACING.lg, paddingBottom: 110, gap: SPACING.lg },
   loader: { flex: 1, alignItems: "center", justifyContent: "center", gap: SPACING.md },
   loaderText: { color: COLORS.textMuted, fontWeight: "700" },
-  hero: { padding: SPACING.xl, borderRadius: RADIUS.xl, backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border },
+  hero: {
+    overflow: "hidden",
+    padding: SPACING.xl,
+    borderRadius: RADIUS.xl,
+    backgroundColor: "#0B1A2C",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.10)",
+    ...SHADOW,
+  },
+  heroGlowOne: { position: "absolute", width: 190, height: 190, borderRadius: RADIUS.round, right: -70, top: -85, backgroundColor: "rgba(220,38,38,0.18)" },
+  heroGlowTwo: { position: "absolute", width: 150, height: 150, borderRadius: RADIUS.round, left: -70, bottom: -90, backgroundColor: "rgba(37,99,235,0.13)" },
   eyebrow: { color: COLORS.primary, fontSize: 11, fontWeight: "900", letterSpacing: 1.2 },
-  title: { marginTop: SPACING.sm, color: COLORS.white, fontSize: 28, fontWeight: "900" },
-  description: { marginTop: SPACING.sm, color: COLORS.textMuted, fontSize: 13, lineHeight: 20 },
+  title: { marginTop: SPACING.sm, color: COLORS.white, fontSize: 30, fontWeight: "900" },
+  description: { marginTop: SPACING.sm, maxWidth: 620, color: COLORS.textSoft, fontSize: 13, lineHeight: 20 },
+  heroMetrics: { marginTop: SPACING.xl, flexDirection: "row", flexWrap: "wrap", gap: SPACING.sm },
+  heroMetric: { flexGrow: 1, flexBasis: 120, minHeight: 68, padding: SPACING.md, borderRadius: RADIUS.lg, backgroundColor: "rgba(255,255,255,0.06)", borderWidth: 1, borderColor: "rgba(255,255,255,0.09)" },
+  heroMetricValue: { color: COLORS.white, fontSize: 18, fontWeight: "900" },
+  heroMetricLabel: { marginTop: 4, color: COLORS.textMuted, fontSize: 10, fontWeight: "700" },
   error: { padding: SPACING.md, borderRadius: RADIUS.md, color: COLORS.danger, backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.danger, fontWeight: "700" },
-  sectionTitle: { marginTop: SPACING.sm, color: COLORS.white, fontSize: 17, fontWeight: "900" },
+  sectionHeader: { marginTop: SPACING.sm },
+  sectionTitle: { color: COLORS.white, fontSize: 18, fontWeight: "900" },
+  sectionSubtitle: { marginTop: 3, color: COLORS.textMuted, fontSize: 11 },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: SPACING.md },
   segmentList: { gap: SPACING.md },
-  segmentCard: { paddingHorizontal: SPACING.lg, borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.surface },
-  segmentName: { paddingVertical: SPACING.md, color: COLORS.primary, fontSize: 16, fontWeight: "900", borderBottomWidth: 1, borderBottomColor: COLORS.border },
-  detailCard: { paddingHorizontal: SPACING.lg, borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.surface },
-  summaryRow: { minHeight: 54, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: SPACING.md, borderBottomWidth: 1, borderBottomColor: COLORS.border },
-  summaryRowLast: { borderBottomWidth: 0 },
-  summaryLabel: { flex: 1, color: COLORS.textMuted, fontSize: 13, fontWeight: "700" },
-  summaryValue: { color: COLORS.white, fontSize: 14, fontWeight: "900" },
+  segmentCard: { padding: SPACING.lg, borderRadius: RADIUS.xl, borderWidth: 1, backgroundColor: COLORS.surface },
+  segmentHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: SPACING.md },
+  segmentName: { fontSize: 18, fontWeight: "900" },
+  segmentCaption: { marginTop: 3, color: COLORS.textMuted, fontSize: 10 },
+  segmentBadge: { minWidth: 54, minHeight: 34, alignItems: "center", justifyContent: "center", borderRadius: RADIUS.round, paddingHorizontal: SPACING.sm },
+  segmentBadgeText: { fontSize: 12, fontWeight: "900" },
+  segmentMetrics: { marginTop: SPACING.lg, flexDirection: "row", flexWrap: "wrap", gap: SPACING.sm },
+  miniMetric: { flexGrow: 1, flexBasis: 92, minHeight: 62, justifyContent: "center", padding: SPACING.sm, borderRadius: RADIUS.md, backgroundColor: COLORS.surfaceLight },
+  miniMetricValue: { color: COLORS.white, fontSize: 15, fontWeight: "900" },
+  miniMetricLabel: { marginTop: 3, color: COLORS.textMuted, fontSize: 9, fontWeight: "700" },
+  segmentProgressRow: { marginTop: SPACING.lg, flexDirection: "row", justifyContent: "space-between", gap: SPACING.md },
+  segmentProgressLabel: { color: COLORS.textMuted, fontSize: 11, fontWeight: "700" },
+  segmentProgressValue: { fontSize: 11, fontWeight: "900" },
+  segmentTrack: { height: 7, marginTop: SPACING.sm, overflow: "hidden", borderRadius: RADIUS.round, backgroundColor: COLORS.surfaceLight },
+  segmentFill: { height: "100%", borderRadius: RADIUS.round },
+  collectionCard: { padding: SPACING.lg, borderRadius: RADIUS.xl, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.surface, gap: SPACING.xl },
+  collectionTitle: { color: COLORS.white, fontSize: 17, fontWeight: "900" },
+  collectionRow: { gap: SPACING.sm },
+  collectionHeader: { flexDirection: "row", justifyContent: "space-between", gap: SPACING.md },
+  collectionLabel: { color: COLORS.text, fontSize: 13, fontWeight: "800" },
+  collectionPercent: { fontSize: 12, fontWeight: "900" },
+  collectionValue: { color: COLORS.textMuted, fontSize: 11, fontWeight: "700" },
+  collectionTrack: { height: 9, overflow: "hidden", borderRadius: RADIUS.round, backgroundColor: COLORS.surfaceLight },
+  collectionFill: { height: "100%", borderRadius: RADIUS.round },
   actions: { gap: SPACING.sm },
-  actionButton: { minHeight: 54, paddingHorizontal: SPACING.lg, flexDirection: "row", alignItems: "center", borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.surface },
+  actionButton: { minHeight: 56, paddingHorizontal: SPACING.lg, flexDirection: "row", alignItems: "center", gap: SPACING.md, borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.surface },
+  actionDot: { width: 9, height: 9, borderRadius: RADIUS.round },
   actionText: { flex: 1, color: COLORS.white, fontSize: 14, fontWeight: "800" },
-  actionArrow: { color: COLORS.primary, fontSize: 28, fontWeight: "700" },
-  pressed: { opacity: 0.7 },
+  actionArrow: { fontSize: 28, fontWeight: "700" },
+  pressed: { opacity: 0.72, transform: [{ scale: 0.99 }] },
 });

@@ -1,27 +1,37 @@
 import { Platform } from "react-native";
 
+export const SEGMENT_COLORS = {
+  finance: "#10B981",
+  assets: "#D4A72C",
+  solar: "#F97316",
+} as const;
+
 export const COLORS = {
   background: "#06111F",
+  backgroundLight: "#F4F7FB",
   surface: "#0D1B2D",
   surfaceLight: "#15263B",
   surfaceElevated: "#1B2F48",
+  surfaceGlass: "rgba(13,27,45,0.86)",
   primary: "#DC2626",
   primaryDark: "#991B1B",
   primarySoft: "rgba(220,38,38,0.14)",
+  navy: "#07182A",
   white: "#FFFFFF",
   black: "#000000",
   text: "#F8FAFC",
   textMuted: "#9AAEC2",
   textSoft: "#C4D0DC",
+  textDark: "#102033",
   border: "#263A52",
   borderSoft: "rgba(148,163,184,0.18)",
   success: "#16A34A",
   warning: "#F59E0B",
   danger: "#DC2626",
   info: "#2563EB",
-  finance: "#2563EB",
-  assets: "#DC2626",
-  solar: "#F59E0B",
+  finance: SEGMENT_COLORS.finance,
+  assets: SEGMENT_COLORS.assets,
+  solar: SEGMENT_COLORS.solar,
 } as const;
 
 export const SPACING = {
@@ -46,6 +56,7 @@ export const RADIUS = {
   md: 12,
   lg: 18,
   xl: 24,
+  xxl: 30,
   round: 999,
 } as const;
 
@@ -57,17 +68,25 @@ export const SHADOW = {
   elevation: 8,
 } as const;
 
+export const SOFT_SHADOW = {
+  shadowColor: "#000000",
+  shadowOffset: { width: 0, height: 3 },
+  shadowOpacity: 0.14,
+  shadowRadius: 8,
+  elevation: 4,
+} as const;
+
 export const Colors = {
   light: {
-    text: "#11181C",
+    text: COLORS.textDark,
     textSecondary: "#687076",
-    background: "#FFFFFF",
-    backgroundElement: "#F1F5F9",
-    backgroundSelected: "#E2E8F0",
-    tint: "#DC2626",
+    background: COLORS.backgroundLight,
+    backgroundElement: COLORS.white,
+    backgroundSelected: "#E8EEF5",
+    tint: COLORS.primary,
     icon: "#687076",
     tabIconDefault: "#687076",
-    tabIconSelected: "#DC2626",
+    tabIconSelected: COLORS.primary,
   },
   dark: {
     text: "#ECEDEE",
@@ -84,15 +103,28 @@ export const Colors = {
 
 export type ColorScheme = keyof typeof Colors;
 export type ThemeColor = keyof (typeof Colors)[ColorScheme];
+export type SegmentKey = keyof typeof SEGMENT_COLORS;
 
 export const Spacing = {
-  one: 4,
-  two: 8,
-  three: 12,
-  four: 16,
-  five: 24,
-  six: 32,
+  one: SPACING.one,
+  two: SPACING.two,
+  three: SPACING.three,
+  four: SPACING.four,
+  five: SPACING.five,
+  six: SPACING.six,
 } as const;
+
+export function getSegmentColor(segment?: string | null): string {
+  const normalized = (segment ?? "").trim().toLowerCase();
+
+  if (normalized.includes("financ")) return SEGMENT_COLORS.finance;
+  if (normalized.includes("asset") || normalized.includes("property") || normalized.includes("real")) {
+    return SEGMENT_COLORS.assets;
+  }
+  if (normalized.includes("solar")) return SEGMENT_COLORS.solar;
+
+  return COLORS.info;
+}
 
 const defaultFonts = {
   sans: "normal",
