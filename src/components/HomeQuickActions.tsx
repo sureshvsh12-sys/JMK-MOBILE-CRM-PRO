@@ -2,6 +2,7 @@ import { useRouter, type Href } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { RADIUS, SHADOW, SPACING } from "../constants/theme";
+import { useAppTheme } from "../context/ThemeContext";
 
 type HomeAction = {
   title: string;
@@ -9,7 +10,6 @@ type HomeAction = {
   icon: string;
   route: Href;
   accentColor: string;
-  softColor: string;
 };
 
 const ACTIONS: readonly HomeAction[] = [
@@ -19,7 +19,6 @@ const ACTIONS: readonly HomeAction[] = [
     icon: "⌕",
     route: "/search",
     accentColor: "#2563EB",
-    softColor: "#EFF6FF",
   },
   {
     title: "Team",
@@ -27,7 +26,6 @@ const ACTIONS: readonly HomeAction[] = [
     icon: "♟",
     route: "/employees",
     accentColor: "#7C3AED",
-    softColor: "#F5F3FF",
   },
   {
     title: "Reports",
@@ -35,7 +33,6 @@ const ACTIONS: readonly HomeAction[] = [
     icon: "▥",
     route: "/reports",
     accentColor: "#059669",
-    softColor: "#ECFDF5",
   },
   {
     title: "Alerts",
@@ -43,7 +40,6 @@ const ACTIONS: readonly HomeAction[] = [
     icon: "◈",
     route: "/notifications",
     accentColor: "#F59E0B",
-    softColor: "#FFFBEB",
   },
   {
     title: "Settings",
@@ -51,12 +47,12 @@ const ACTIONS: readonly HomeAction[] = [
     icon: "⚙",
     route: "/settings",
     accentColor: "#0EA5E9",
-    softColor: "#F0F9FF",
   },
 ];
 
 export default function HomeQuickActions() {
   const router = useRouter();
+  const { palette } = useAppTheme();
 
   return (
     <View style={styles.container}>
@@ -69,8 +65,9 @@ export default function HomeQuickActions() {
           style={({ pressed }) => [
             styles.action,
             {
-              backgroundColor: action.softColor,
-              borderColor: `${action.accentColor}3D`,
+              backgroundColor: palette.surface,
+              borderColor: `${action.accentColor}55`,
+              shadowColor: palette.mode === "dark" ? "#000000" : "#64748B",
             },
             pressed && styles.pressed,
           ]}
@@ -90,10 +87,13 @@ export default function HomeQuickActions() {
           </View>
 
           <View style={styles.copy}>
-            <Text style={styles.title} numberOfLines={1}>
+            <Text style={[styles.title, { color: palette.text }]} numberOfLines={1}>
               {action.title}
             </Text>
-            <Text style={styles.subtitle} numberOfLines={1}>
+            <Text
+              style={[styles.subtitle, { color: palette.textMuted }]}
+              numberOfLines={1}
+            >
               {action.subtitle}
             </Text>
           </View>
@@ -165,13 +165,11 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   title: {
-    color: "#102033",
     fontSize: 13.5,
     fontWeight: "900",
   },
   subtitle: {
     marginTop: 4,
-    color: "#61758A",
     fontSize: 10.5,
     fontWeight: "600",
   },

@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from "react-native";
 
 import { COLORS, SPACING } from "../../constants/theme";
+import { useAppTheme } from "../../context/ThemeContext";
 
 type ScreenSectionHeaderProps = {
   title: string;
@@ -8,10 +9,14 @@ type ScreenSectionHeaderProps = {
 };
 
 export default function ScreenSectionHeader({ title, subtitle }: ScreenSectionHeaderProps) {
+  const { palette } = useAppTheme();
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{title}</Text>
-      {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+      <Text style={[styles.title, { color: palette.text }]}>{title}</Text>
+      {subtitle ? (
+        <Text style={[styles.subtitle, { color: palette.textMuted }]}>{subtitle}</Text>
+      ) : null}
     </View>
   );
 }

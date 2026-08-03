@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { COLORS, RADIUS, SOFT_SHADOW, SPACING } from "../constants/theme";
+import { useAppTheme } from "../context/ThemeContext";
 
 type DashboardStatCardProps = {
   title: string;
@@ -21,14 +22,22 @@ export default function DashboardStatCard({
   trend,
   onPress,
 }: DashboardStatCardProps) {
+  const { palette } = useAppTheme();
+
   return (
     <Pressable
       accessibilityRole={onPress ? "button" : undefined}
+      accessibilityLabel={`${title}: ${value}`}
       disabled={!onPress}
       onPress={onPress}
       style={({ pressed }) => [
         styles.card,
-        { borderTopColor: accentColor },
+        {
+          backgroundColor: palette.surface,
+          borderColor: palette.border,
+          borderTopColor: accentColor,
+          shadowColor: palette.mode === "dark" ? "#000000" : "#64748B",
+        },
         pressed && styles.pressed,
       ]}
     >
@@ -48,7 +57,7 @@ export default function DashboardStatCard({
         </View>
 
         {trend ? (
-          <View style={[styles.trendPill, { backgroundColor: `${accentColor}12` }]}>
+          <View style={[styles.trendPill, { backgroundColor: `${accentColor}18` }]}>
             <Text style={[styles.trendText, { color: accentColor }]}>{trend}</Text>
           </View>
         ) : (
@@ -56,19 +65,24 @@ export default function DashboardStatCard({
         )}
       </View>
 
-      <Text style={styles.title}>{title.toUpperCase()}</Text>
+      <Text style={[styles.title, { color: palette.textMuted }]}>
+        {title.toUpperCase()}
+      </Text>
 
       <Text
         numberOfLines={1}
         adjustsFontSizeToFit
         minimumFontScale={0.8}
-        style={styles.value}
+        style={[styles.value, { color: palette.text }]}
       >
         {value}
       </Text>
 
       {description ? (
-        <Text style={styles.description} numberOfLines={1}>
+        <Text
+          style={[styles.description, { color: palette.textMuted }]}
+          numberOfLines={1}
+        >
           {description}
         </Text>
       ) : null}
@@ -85,9 +99,7 @@ const styles = StyleSheet.create({
     padding: SPACING.lg,
     overflow: "hidden",
     borderRadius: RADIUS.xl,
-    backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: COLORS.border,
     borderTopWidth: 3,
     ...SOFT_SHADOW,
   },
@@ -132,21 +144,18 @@ const styles = StyleSheet.create({
   },
   title: {
     marginTop: SPACING.md,
-    color: COLORS.textMuted,
     fontSize: 10,
     fontWeight: "900",
     letterSpacing: 0.45,
   },
   value: {
     marginTop: 5,
-    color: COLORS.text,
     fontSize: 26,
     fontWeight: "900",
     letterSpacing: -0.6,
   },
   description: {
     marginTop: 5,
-    color: COLORS.textMuted,
     fontSize: 10,
     fontWeight: "600",
   },

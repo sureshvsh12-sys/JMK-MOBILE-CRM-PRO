@@ -2,7 +2,8 @@ import { usePathname, useRouter, type Href } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { COLORS, RADIUS, SHADOW } from "../constants/theme";
+import { RADIUS, SHADOW } from "../constants/theme";
+import { useAppTheme } from "../context/ThemeContext";
 
 export type BottomNavigationKey =
   | "dashboard"
@@ -25,14 +26,31 @@ type BottomNavigationProps = {
 };
 
 const ITEMS: readonly NavigationItem[] = [
-  { key: "dashboard", title: "Home", icon: "⌂", route: "/dashboard", matchPaths: ["/dashboard"] },
-  { key: "leads", title: "Leads", icon: "♙", route: "/leads", matchPaths: ["/leads", "/lead-form"] },
+  {
+    key: "dashboard",
+    title: "Home",
+    icon: "⌂",
+    route: "/dashboard",
+    matchPaths: ["/dashboard"],
+  },
+  {
+    key: "leads",
+    title: "Leads",
+    icon: "♙",
+    route: "/leads",
+    matchPaths: ["/leads", "/lead-form"],
+  },
   {
     key: "customers",
     title: "Customers",
     icon: "♟",
     route: "/customers",
-    matchPaths: ["/customers", "/customer-form", "/customer-360", "/customer-documents"],
+    matchPaths: [
+      "/customers",
+      "/customer-form",
+      "/customer-360",
+      "/customer-documents",
+    ],
   },
   {
     key: "followups",
@@ -47,34 +65,75 @@ const ITEMS: readonly NavigationItem[] = [
     icon: "•••",
     route: "/settings",
     matchPaths: [
-      "/settings", "/bookings", "/booking-form", "/booking-payments",
-      "/booking-payment-form", "/booking-installments", "/booking-installment-form",
-      "/finance", "/finance-entry", "/solar", "/solar-form", "/employees",
-      "/reports", "/search", "/notifications", "/raw-contacts",
+      "/settings",
+      "/bookings",
+      "/booking-form",
+      "/booking-payments",
+      "/booking-payment-form",
+      "/booking-installments",
+      "/booking-installment-form",
+      "/finance",
+      "/finance-entry",
+      "/solar",
+      "/solar-form",
+      "/employees",
+      "/reports",
+      "/search",
+      "/notifications",
+      "/raw-contacts",
     ],
   },
 ];
 
 function matchesPath(pathname: string, paths: readonly string[]) {
-  return paths.some((path) => pathname === path || pathname.startsWith(`${path}/`));
+  return paths.some(
+    (path) => pathname === path || pathname.startsWith(`${path}/`)
+  );
 }
 
-export default function BottomNavigation({ activeKey, onChange }: BottomNavigationProps) {
+export default function BottomNavigation({
+  activeKey,
+  onChange,
+}: BottomNavigationProps) {
   const router = useRouter();
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
-  const resolvedActiveKey = activeKey ?? ITEMS.find((item) => matchesPath(pathname, item.matchPaths))?.key;
+  const { palette } = useAppTheme();
+
+  const resolvedActiveKey =
+    activeKey ??
+    ITEMS.find((item) => matchesPath(pathname, item.matchPaths))?.key;
 
   function handleNavigation(item: NavigationItem) {
     onChange?.(item.key);
-    if (!matchesPath(pathname, item.matchPaths)) router.replace(item.route);
+    if (!matchesPath(pathname, item.matchPaths)) {
+      router.replace(item.route);
+    }
   }
 
   return (
-    <View style={[styles.safeArea, { paddingBottom: Math.max(insets.bottom, 10) }]}>
-      <View accessibilityRole="tablist" style={styles.container}>
+    <View
+      style={[
+        styles.safeArea,
+        {
+          paddingBottom: Math.max(insets.bottom, 10),
+          backgroundColor: palette.background,
+        },
+      ]}
+    >
+      <View
+        accessibilityRole="tablist"
+        style={[
+          styles.container,
+          {
+            backgroundColor: palette.navigation,
+            borderColor: palette.border,
+          },
+        ]}
+      >
         {ITEMS.map((item) => {
           const active = item.key === resolvedActiveKey;
+
           return (
             <Pressable
               key={item.key}
@@ -82,17 +141,51 @@ export default function BottomNavigation({ activeKey, onChange }: BottomNavigati
               accessibilityState={{ selected: active }}
               accessibilityLabel={`${item.title} tab`}
               onPress={() => handleNavigation(item)}
-              style={({ pressed }) => [styles.item, pressed && styles.pressed]}
+              style={({ pressed }) => [
+                styles.item,
+                pressed && styles.pressed,
+              ]}
             >
-              <View style={[styles.iconContainer, active && styles.activeIconContainer]}>
-                <Text style={[styles.icon, item.key === "more" && styles.moreIcon, active && styles.activeIcon]}>
+              <View
+                style={[
+                  styles.iconContainer,
+                  active && {
+                    backgroundColor: palette.primarySoft,
+                    borderColor: palette.primary,
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.icon,
+                    { color: palette.textMuted },
+                    item.key === "more" && styles.moreIcon,
+                    active && { color: palette.primary },
+                  ]}
+                >
                   {item.icon}
                 </Text>
               </View>
-              <Text numberOfLines={1} style={[styles.title, active && styles.activeTitle]}>
+
+              <Text
+                numberOfLines={1}
+                style={[
+                  styles.title,
+                  { color: palette.textMuted },
+                  active && { color: palette.text },
+                ]}
+              >
                 {item.title}
               </Text>
-              {active ? <View style={styles.activeIndicator} /> : null}
+
+              {active ? (
+                <View
+                  style={[
+                    styles.activeIndicator,
+                    { backgroundColor: palette.primary },
+                  ]}
+                />
+              ) : null}
             </Pressable>
           );
         })}
@@ -105,7 +198,6 @@ const styles = StyleSheet.create({
   safeArea: {
     paddingHorizontal: 12,
     paddingTop: 8,
-    backgroundColor: "transparent",
   },
   container: {
     minHeight: 70,
@@ -114,9 +206,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 7,
     paddingVertical: 6,
     borderRadius: 25,
-    backgroundColor: "rgba(255,255,255,0.97)",
     borderWidth: 1,
-    borderColor: "#D9E4EF",
     ...SHADOW,
   },
   item: {
@@ -133,15 +223,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: RADIUS.round,
-  },
-  activeIconContainer: {
-    minWidth: 48,
-    backgroundColor: COLORS.primarySoft,
     borderWidth: 1,
-    borderColor: "rgba(227,38,46,0.18)",
+    borderColor: "transparent",
   },
   icon: {
-    color: "#718499",
     fontSize: 21,
     fontWeight: "900",
     lineHeight: 24,
@@ -150,18 +235,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     letterSpacing: 1.5,
   },
-  activeIcon: {
-    color: COLORS.primary,
-  },
   title: {
     marginTop: 2,
-    color: "#718499",
     fontSize: 9,
     fontWeight: "700",
-  },
-  activeTitle: {
-    color: COLORS.navy,
-    fontWeight: "900",
   },
   activeIndicator: {
     position: "absolute",
@@ -169,7 +246,6 @@ const styles = StyleSheet.create({
     width: 18,
     height: 3,
     borderRadius: RADIUS.round,
-    backgroundColor: COLORS.primary,
   },
   pressed: {
     opacity: 0.72,

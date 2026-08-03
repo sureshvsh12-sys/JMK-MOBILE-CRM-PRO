@@ -214,7 +214,7 @@ async function flushPendingOperations(): Promise<void> {
           .single();
         if (error) throw error;
 
-        const cloudCustomer = mapCustomer(data as CustomerRow);
+        const cloudCustomer = mapCustomer(data as unknown as CustomerRow);
         const customers = await readCustomers();
         await saveCustomers([
           cloudCustomer,
@@ -239,7 +239,7 @@ async function flushPendingOperations(): Promise<void> {
         .select(CUSTOMER_COLUMNS)
         .single();
       if (error) throw error;
-      await replaceLocalCustomer(mapCustomer(data as CustomerRow));
+      await replaceLocalCustomer(mapCustomer(data as unknown as CustomerRow));
     } catch {
       remaining.push(operation);
     }
@@ -310,7 +310,7 @@ export async function getCustomers(options?: {
 
     if (error) throw error;
     const cloudCustomers = (data ?? []).map((row) =>
-      mapCustomer(row as CustomerRow)
+      mapCustomer(row as unknown as CustomerRow)
     );
     const pending = await readPendingOperations();
     const localPendingCustomers = pending
@@ -355,7 +355,7 @@ export async function getCustomerById(id: string): Promise<Customer | null> {
     if (error) throw error;
     if (!data) return cached;
 
-    const customer = mapCustomer(data as CustomerRow);
+    const customer = mapCustomer(data as unknown as CustomerRow);
     await replaceLocalCustomer(customer);
     return customer;
   } catch {
@@ -375,7 +375,7 @@ export async function addCustomer(value: CustomerInput): Promise<Customer> {
         .single();
       if (error) throw error;
 
-      const customer = mapCustomer(data as CustomerRow);
+      const customer = mapCustomer(data as unknown as CustomerRow);
       await replaceLocalCustomer(customer);
       return customer;
     } catch {
@@ -425,7 +425,7 @@ export async function updateCustomer(
         .single();
       if (error) throw error;
 
-      const cloudCustomer = mapCustomer(data as CustomerRow);
+      const cloudCustomer = mapCustomer(data as unknown as CustomerRow);
       await replaceLocalCustomer(cloudCustomer);
       return cloudCustomer;
     } catch {

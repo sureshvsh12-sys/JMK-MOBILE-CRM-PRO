@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { RADIUS, SHADOW, SPACING } from "../constants/theme";
+import { useAppTheme } from "../context/ThemeContext";
 
 type QuickActionCardProps = {
   title: string;
@@ -17,6 +18,8 @@ export default function QuickActionCard({
   accentColor = "#2563EB",
   onPress,
 }: QuickActionCardProps) {
+  const { palette } = useAppTheme();
+
   return (
     <Pressable
       accessibilityRole="button"
@@ -25,7 +28,9 @@ export default function QuickActionCard({
       style={({ pressed }) => [
         styles.card,
         {
+          backgroundColor: palette.surface,
           borderColor: `${accentColor}55`,
+          shadowColor: palette.mode === "dark" ? "#000000" : "#64748B",
         },
         pressed && styles.pressed,
       ]}
@@ -45,12 +50,15 @@ export default function QuickActionCard({
       </View>
 
       <View style={styles.content}>
-        <Text style={styles.title} numberOfLines={1}>
+        <Text style={[styles.title, { color: palette.text }]} numberOfLines={1}>
           {title}
         </Text>
 
         {subtitle ? (
-          <Text style={styles.subtitle} numberOfLines={2}>
+          <Text
+            style={[styles.subtitle, { color: palette.textMuted }]}
+            numberOfLines={2}
+          >
             {subtitle}
           </Text>
         ) : null}
@@ -80,11 +88,9 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.md,
     overflow: "hidden",
     borderRadius: RADIUS.lg,
-    backgroundColor: "#FFFFFF",
     borderWidth: 1.5,
     ...SHADOW,
   },
-
   accentBar: {
     position: "absolute",
     left: 0,
@@ -92,7 +98,6 @@ const styles = StyleSheet.create({
     bottom: 0,
     width: 5,
   },
-
   iconContainer: {
     width: 52,
     height: 52,
@@ -105,33 +110,26 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 5,
   },
-
   icon: {
     color: "#FFFFFF",
     fontSize: 24,
     fontWeight: "900",
   },
-
   content: {
     flex: 1,
     minWidth: 0,
     marginHorizontal: SPACING.md,
   },
-
   title: {
-    color: "#102033",
     fontSize: 14,
     fontWeight: "900",
   },
-
   subtitle: {
     marginTop: 4,
-    color: "#61758A",
     fontSize: 11,
     lineHeight: 16,
     fontWeight: "600",
   },
-
   arrowCircle: {
     width: 38,
     height: 38,
@@ -143,7 +141,6 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
-
   arrow: {
     marginTop: -2,
     color: "#FFFFFF",
@@ -151,7 +148,6 @@ const styles = StyleSheet.create({
     lineHeight: 30,
     fontWeight: "800",
   },
-
   pressed: {
     opacity: 0.88,
     transform: [{ scale: 0.985 }],

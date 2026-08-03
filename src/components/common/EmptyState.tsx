@@ -1,11 +1,13 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { COLORS, RADIUS, SPACING } from "../../constants/theme";
+import { useAppTheme } from "../../context/ThemeContext";
 
 type EmptyStateProps = {
   icon?: string;
   title: string;
-  message: string;
+  message?: string;
+  description?: string;
   actionLabel?: string;
   onActionPress?: () => void;
 };
@@ -14,16 +16,19 @@ export default function EmptyState({
   icon = "○",
   title,
   message,
+  description,
   actionLabel,
   onActionPress,
 }: EmptyStateProps) {
+  const { palette } = useAppTheme();
+
   return (
     <View style={styles.container}>
-      <View style={styles.iconBox}>
+      <View style={[styles.iconBox, { backgroundColor: palette.surface, borderColor: palette.border }]}>
         <Text style={styles.icon}>{icon}</Text>
       </View>
-      <Text style={styles.title}>{title}</Text>
-      <Text style={styles.message}>{message}</Text>
+      <Text style={[styles.title, { color: palette.text }]}>{title}</Text>
+      <Text style={[styles.message, { color: palette.textMuted }]}>{message ?? description ?? ""}</Text>
       {actionLabel && onActionPress ? (
         <Pressable
           accessibilityRole="button"

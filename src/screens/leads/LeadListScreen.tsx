@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ActivityIndicator, Alert, FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Alert, FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View, type AlertButton } from "react-native";
 import { useRouter } from "expo-router";
 
 import AppButton from "../../components/AppButton";
@@ -27,7 +27,20 @@ export default function LeadListScreen() {
   const stats = useMemo(() => ({ total: leads.length, hot: leads.filter((lead) => lead.temperature === "Hot").length, followups: leads.filter((lead) => Boolean(lead.nextFollowup)).length, value: leads.reduce((sum, lead) => sum + Number(lead.value || 0), 0) }), [leads]);
 
   function updateStage(id: string, currentStage: LeadStage) {
-    Alert.alert("Update Lead Stage", `Current stage: ${currentStage}`, STAGES.filter((item): item is LeadStage => item !== "all").map((nextStage) => ({ text: nextStage, onPress: async () => { await updateLeadStage(id, nextStage); await reload(); } })).concat([{ text: "Cancel", style: "cancel" }]));
+    const buttons: AlertButton[] = STAGES
+      .filter((item): item is LeadStage => item !== "all")
+      .map((nextStage) => ({
+        text: nextStage,
+        onPress: () => {
+          void (async () => {
+            await updateLeadStage(id, nextStage);
+            await reload();
+          })();
+        },
+      }));
+
+    buttons.push({ text: "Cancel", style: "cancel" });
+    Alert.alert("Update Lead Stage", `Current stage: ${currentStage}`, buttons);
   }
 
   return (

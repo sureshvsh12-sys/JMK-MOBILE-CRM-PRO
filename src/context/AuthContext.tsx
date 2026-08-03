@@ -80,9 +80,19 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }, []);
 
   const signOut = useCallback(async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
-    setSession(null);
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.auth.signOut({ scope: "local" });
+      if (error) {
+        throw error;
+      }
+    } finally {
+      // Always clear the in-memory session so the user cannot remain trapped
+      // inside protected screens when the stored token is expired/corrupted.
+      setSession(null);
+      setLoading(false);
+    }
   }, []);
 
   const value = useMemo<AuthContextValue>(

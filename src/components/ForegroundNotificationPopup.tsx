@@ -12,7 +12,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { RADIUS, SHADOW } from "../constants/theme";
-import { useTheme } from "../hooks/use-theme";
+import { useAppTheme } from "../context/ThemeContext";
 import {
   getNotifications,
   markNotificationAsRead,
@@ -46,7 +46,7 @@ function getModuleIcon(module: AppNotification["module"]): string {
 export default function ForegroundNotificationPopup() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const theme = useTheme();
+  const { palette, resolvedTheme } = useAppTheme();
   const [notification, setNotification] = useState<AppNotification | null>(null);
   const initializedRef = useRef(false);
   const latestKnownIdRef = useRef<string | null>(null);
@@ -171,7 +171,7 @@ export default function ForegroundNotificationPopup() {
   if (!notification) return null;
 
   const accent = getModuleAccent(notification.module);
-  const isLight = theme.background === "#FFFFFF";
+  const isLight = resolvedTheme === "light";
 
   return (
     <View
@@ -205,18 +205,18 @@ export default function ForegroundNotificationPopup() {
             <View style={styles.metaRow}>
               <Text style={[styles.module, { color: accent }]}>{notification.module}</Text>
               <View style={[styles.priorityDot, { backgroundColor: accent }]} />
-              <Text style={[styles.now, { color: theme.textSecondary }]}>Now</Text>
+              <Text style={[styles.now, { color: palette.textMuted }]}>Now</Text>
             </View>
 
-            <Text numberOfLines={1} style={[styles.title, { color: theme.text }]}> 
+            <Text numberOfLines={1} style={[styles.title, { color: palette.text }]}> 
               {notification.title}
             </Text>
-            <Text numberOfLines={2} style={[styles.message, { color: theme.textSecondary }]}> 
+            <Text numberOfLines={2} style={[styles.message, { color: palette.textMuted }]}> 
               {notification.message}
             </Text>
           </View>
 
-          <Text style={[styles.chevron, { color: theme.textSecondary }]}>›</Text>
+          <Text style={[styles.chevron, { color: palette.textMuted }]}>›</Text>
         </Pressable>
 
         <Pressable
@@ -226,7 +226,7 @@ export default function ForegroundNotificationPopup() {
           onPress={hide}
           style={({ pressed }) => [styles.closeButton, pressed && styles.pressed]}
         >
-          <Text style={[styles.closeText, { color: theme.textSecondary }]}>×</Text>
+          <Text style={[styles.closeText, { color: palette.textMuted }]}>×</Text>
         </Pressable>
       </Animated.View>
     </View>
@@ -235,7 +235,7 @@ export default function ForegroundNotificationPopup() {
 
 const styles = StyleSheet.create({
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 9999,
     elevation: 9999,
     paddingHorizontal: 12,

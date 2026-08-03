@@ -16,11 +16,13 @@ import BrandLogo from "../../components/BrandLogo";
 import PrimaryButton from "../../components/PrimaryButton";
 import { COLORS, RADIUS, SPACING } from "../../constants/theme";
 import { useAuth } from "../../context/AuthContext";
+import { useAppTheme } from "../../context/ThemeContext";
 import { supabase } from "../../services/supabase";
 
 export default function LoginScreen() {
   const router = useRouter();
   const { session, loading: authLoading, configured, signIn } = useAuth();
+  const { palette, resolvedTheme } = useAppTheme();
 
   const [email, setEmail] = useState("suresh.vsh12@gmail.com");
   const [password, setPassword] = useState("");
@@ -124,7 +126,7 @@ export default function LoginScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: palette.background }]}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ScrollView
@@ -137,45 +139,45 @@ export default function LoginScreen() {
             width={210}
             showGroupName
             showTagline
-            background="light"
+            background={resolvedTheme}
           />
         </View>
 
         <View style={styles.headingSection}>
-          <Text style={styles.title}>Welcome Back</Text>
-          <Text style={styles.subtitle}>JMK CRM PRO Enterprise</Text>
+          <Text style={[styles.title, { color: palette.text }]}>Welcome Back</Text>
+          <Text style={[styles.subtitle, { color: palette.primary }]}>JMK CRM PRO Enterprise</Text>
         </View>
 
-        <View style={styles.formCard}>
-          <Text style={styles.label}>Email Address</Text>
+        <View style={[styles.formCard, { backgroundColor: palette.surface, borderColor: palette.border }]}>
+          <Text style={[styles.label, { color: palette.text }]}>Email Address</Text>
           <TextInput
             value={email}
             onChangeText={setEmail}
             placeholder="suresh.vsh12@gmail.com"
-            placeholderTextColor="#64748B"
+            placeholderTextColor={palette.textMuted}
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
             textContentType="emailAddress"
             autoComplete="email"
-            selectionColor={COLORS.primary}
-            cursorColor={COLORS.primary}
-            style={styles.input}
+            selectionColor={palette.primary}
+            cursorColor={palette.primary}
+            style={[styles.input, { backgroundColor: palette.surfaceRaised, borderColor: palette.border, color: palette.text }]}
           />
 
-          <Text style={styles.label}>Password</Text>
+          <Text style={[styles.label, { color: palette.text }]}>Password</Text>
           <TextInput
             value={password}
             onChangeText={setPassword}
             placeholder="Enter password"
-            placeholderTextColor="#64748B"
+            placeholderTextColor={palette.textMuted}
             secureTextEntry
             textContentType="password"
             autoComplete="password"
-            selectionColor={COLORS.primary}
-            cursorColor={COLORS.primary}
+            selectionColor={palette.primary}
+            cursorColor={palette.primary}
             onSubmitEditing={() => void handleLogin()}
-            style={styles.input}
+            style={[styles.input, { backgroundColor: palette.surfaceRaised, borderColor: palette.border, color: palette.text }]}
           />
 
           <Pressable
@@ -187,7 +189,7 @@ export default function LoginScreen() {
               pressed && styles.forgotButtonPressed,
             ]}
           >
-            <Text style={styles.forgotText}>
+            <Text style={[styles.forgotText, { color: palette.primary }]}>
               {resetLoading ? "Sending reset link..." : "Forgot Password?"}
             </Text>
           </Pressable>
@@ -199,9 +201,9 @@ export default function LoginScreen() {
           />
 
           {!configured ? (
-            <View style={styles.setupBox}>
-              <Text style={styles.setupTitle}>Supabase Setup Required</Text>
-              <Text style={styles.setupText}>
+            <View style={[styles.setupBox, { backgroundColor: palette.surfaceSoft, borderColor: palette.warning }]}>
+              <Text style={[styles.setupTitle, { color: palette.warning }]}>Supabase Setup Required</Text>
+              <Text style={[styles.setupText, { color: palette.textMuted }]}>
                 .env file me EXPO_PUBLIC_SUPABASE_URL aur
                 EXPO_PUBLIC_SUPABASE_ANON_KEY set karein.
               </Text>
@@ -210,11 +212,11 @@ export default function LoginScreen() {
         </View>
 
         <View style={styles.segments}>
-          <Text style={styles.finance}>Financial Servicess</Text>
-          <Text style={styles.separator}>•</Text>
-          <Text style={styles.assets}>Assets</Text>
-          <Text style={styles.separator}>•</Text>
-          <Text style={styles.solar}>Solar Solutions</Text>
+          <Text style={[styles.finance, { color: palette.finance }]}>Financial Servicess</Text>
+          <Text style={[styles.separator, { color: palette.textMuted }]}>•</Text>
+          <Text style={[styles.assets, { color: palette.assets }]}>Assets</Text>
+          <Text style={[styles.separator, { color: palette.textMuted }]}>•</Text>
+          <Text style={[styles.solar, { color: palette.solar }]}>Solar Solutions</Text>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

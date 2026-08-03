@@ -196,7 +196,7 @@ export async function fetchLeads(options?: {
     const { data, error } = await query;
     if (error) throw error;
 
-    const cloudLeads = (data ?? []).map((row) => mapLead(row as LeadRow));
+    const cloudLeads = (data ?? []).map((row) => mapLead(row as unknown as LeadRow));
     const cached = await getCachedLeads();
     const pendingLocal = cached.filter((item) => item.id.startsWith("local-lead-"));
     const merged = [...pendingLocal, ...cloudLeads.filter((item) => !pendingLocal.some((local) => local.id === item.id))];
@@ -219,7 +219,7 @@ export async function fetchLeadById(id: string): Promise<Lead> {
   try {
     const { data, error } = await supabase.from("leads").select(LEAD_COLUMNS).eq("id", id).single();
     if (error) throw error;
-    const lead = mapLead(data as LeadRow);
+    const lead = mapLead(data as unknown as LeadRow);
     await upsertCachedLead(lead);
     return lead;
   } catch (error) {
@@ -242,7 +242,7 @@ export async function createLead(input: LeadInput): Promise<Lead> {
       .select(LEAD_COLUMNS)
       .single();
     if (error) throw error;
-    const lead = mapLead(data as LeadRow);
+    const lead = mapLead(data as unknown as LeadRow);
     await upsertCachedLead(lead);
     return lead;
   } catch {
@@ -280,7 +280,7 @@ export async function updateLead(id: string, input: LeadInput): Promise<Lead> {
       .select(LEAD_COLUMNS)
       .single();
     if (error) throw error;
-    const updated = mapLead(data as LeadRow);
+    const updated = mapLead(data as unknown as LeadRow);
     await upsertCachedLead(updated);
     return updated;
   } catch (error) {
@@ -315,7 +315,7 @@ export async function updateLeadStage(id: string, stage: LeadStage): Promise<Lea
       .select(LEAD_COLUMNS)
       .single();
     if (error) throw error;
-    const updated = mapLead(data as LeadRow);
+    const updated = mapLead(data as unknown as LeadRow);
     await upsertCachedLead(updated);
     return updated;
   } catch (error) {

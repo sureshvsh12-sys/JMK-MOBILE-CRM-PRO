@@ -97,7 +97,7 @@ export async function fetchRawContacts(options?: {
     const { data, error } = await query;
     if (error) throw error;
 
-    const contacts = (data ?? []) as RawContact[];
+    const contacts = (data ?? []) as unknown as RawContact[];
     const cached = await getCachedRawContacts();
     const merged = new Map(cached.map((item) => [item.id, item]));
     contacts.forEach((item) => merged.set(item.id, item));
@@ -146,7 +146,7 @@ export async function updateRawContact(
       .single();
 
     if (error) throw error;
-    const updated = data as RawContact;
+    const updated = data as unknown as RawContact;
     await upsertCachedRawContact(updated);
     return updated;
   } catch (error) {

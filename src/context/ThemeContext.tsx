@@ -117,6 +117,9 @@ export function ThemeProvider({ children }: PropsWithChildren) {
           setThemeModeState(stored);
         }
       })
+      .catch(() => {
+        if (active) setThemeModeState("dark");
+      })
       .finally(() => {
         if (active) setIsReady(true);
       });
@@ -126,9 +129,16 @@ export function ThemeProvider({ children }: PropsWithChildren) {
   }, []);
 
   const setThemeMode = useCallback(async (mode: ThemeMode) => {
+    const previousMode = themeMode;
     setThemeModeState(mode);
-    await AsyncStorage.setItem(THEME_MODE_KEY, mode);
-  }, []);
+
+    try {
+      await AsyncStorage.setItem(THEME_MODE_KEY, mode);
+    } catch (error) {
+      setThemeModeState(previousMode);
+      throw error;
+    }
+  }, [themeMode]);
 
   const resolvedTheme: ResolvedTheme =
     themeMode === "system" ? (systemScheme === "light" ? "light" : "dark") : themeMode;

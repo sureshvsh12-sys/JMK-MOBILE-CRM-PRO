@@ -18,7 +18,6 @@ function AppNavigator() {
 
           <StatusBar
             style={resolvedTheme === "dark" ? "light" : "dark"}
-            backgroundColor={palette.header}
           />
 
           <Stack

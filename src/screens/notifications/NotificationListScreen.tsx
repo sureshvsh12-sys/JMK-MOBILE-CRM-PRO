@@ -384,6 +384,7 @@ function getModuleIcon(
   module: NotificationModule
 ): string {
   const iconMap: Record<NotificationModule, string> = {
+    "Raw Contacts": "📞",
     Leads: "🎯",
     Customers: "👥",
     "Follow-ups": "📅",

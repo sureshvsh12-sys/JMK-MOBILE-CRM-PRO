@@ -17,6 +17,7 @@ import HomeQuickActions from "../../components/HomeQuickActions";
 import QuickActionCard from "../../components/QuickActionCard";
 import { COLORS, RADIUS, SHADOW, SPACING } from "../../constants/theme";
 import { useAuth } from "../../context/AuthContext";
+import { useAppTheme } from "../../context/ThemeContext";
 import { useDashboardStats } from "../../hooks/useDashboardStats";
 
 type DashboardStat = {
@@ -102,6 +103,7 @@ export default function DashboardScreen() {
   const router = useRouter();
   const { data, isLoading, error, refresh } = useDashboardStats();
   const { user, signOut } = useAuth();
+  const { palette } = useAppTheme();
   const displayName =
   user?.user_metadata?.full_name ||
   user?.user_metadata?.name ||
@@ -207,7 +209,7 @@ export default function DashboardScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: palette.background }]}>
       <AppHeader
         userName={displayName}
         segment="CRM PRO Enterprise"
@@ -271,16 +273,16 @@ export default function DashboardScreen() {
 
         <View style={styles.sectionHeader}>
           <View>
-            <Text style={styles.sectionEyebrow}>BUSINESS PULSE</Text>
-            <Text style={styles.sectionTitle}>Enterprise Overview</Text>
+            <Text style={[styles.sectionEyebrow, { color: palette.textMuted }]}>BUSINESS PULSE</Text>
+            <Text style={[styles.sectionTitle, { color: palette.text }]}>Enterprise Overview</Text>
           </View>
           <Pressable
             accessibilityRole="button"
             onPress={() => void refresh()}
-            style={({ pressed }) => [styles.refreshButton, pressed && styles.pressed]}
+            style={({ pressed }) => [styles.refreshButton, { backgroundColor: palette.surface, borderColor: palette.border }, pressed && styles.pressed]}
           >
             <Text style={styles.refreshIcon}>↻</Text>
-            <Text style={styles.refreshText}>{isLoading ? "Syncing" : "Refresh"}</Text>
+            <Text style={[styles.refreshText, { color: palette.textSoft }]}>{isLoading ? "Syncing" : "Refresh"}</Text>
           </Pressable>
         </View>
 
@@ -306,34 +308,34 @@ export default function DashboardScreen() {
 
         <View style={styles.sectionHeader}>
           <View>
-            <Text style={styles.sectionEyebrow}>REVENUE</Text>
-            <Text style={styles.sectionTitle}>Financial Snapshot</Text>
+            <Text style={[styles.sectionEyebrow, { color: palette.textMuted }]}>REVENUE</Text>
+            <Text style={[styles.sectionTitle, { color: palette.text }]}>Financial Snapshot</Text>
           </View>
-          <Text style={styles.sectionSubtitle}>Live summary</Text>
+          <Text style={[styles.sectionSubtitle, { color: palette.textMuted }]}>Live summary</Text>
         </View>
 
         <View style={styles.revenueRow}>
           <Pressable
             onPress={() => openRoute("/bookings")}
-            style={({ pressed }) => [styles.revenueCard, pressed && styles.pressed]}
+            style={({ pressed }) => [styles.revenueCard, { backgroundColor: palette.surface, borderColor: palette.border }, pressed && styles.pressed]}
           >
             <View style={[styles.revenueIcon, { backgroundColor: `${ASSETS_COLOR}20` }]}> 
               <Text style={[styles.revenueIconText, { color: ASSETS_COLOR }]}>₹</Text>
             </View>
-            <Text style={styles.revenueLabel}>Booking Received</Text>
-            <Text style={styles.revenueValue}>{formatAmount(data.bookingReceived)}</Text>
+            <Text style={[styles.revenueLabel, { color: palette.textMuted }]}>Booking Received</Text>
+            <Text style={[styles.revenueValue, { color: palette.text }]}>{formatAmount(data.bookingReceived)}</Text>
             <Text style={[styles.revenueHint, { color: ASSETS_COLOR }]}>JMK Assets</Text>
           </Pressable>
 
           <Pressable
             onPress={() => openRoute("/finance")}
-            style={({ pressed }) => [styles.revenueCard, pressed && styles.pressed]}
+            style={({ pressed }) => [styles.revenueCard, { backgroundColor: palette.surface, borderColor: palette.border }, pressed && styles.pressed]}
           >
             <View style={[styles.revenueIcon, { backgroundColor: `${FINANCE_COLOR}20` }]}> 
               <Text style={[styles.revenueIconText, { color: FINANCE_COLOR }]}>₹</Text>
             </View>
-            <Text style={styles.revenueLabel}>Net Balance</Text>
-            <Text style={styles.revenueValue}>{formatAmount(data.financeBalance)}</Text>
+            <Text style={[styles.revenueLabel, { color: palette.textMuted }]}>Net Balance</Text>
+            <Text style={[styles.revenueValue, { color: palette.text }]}>{formatAmount(data.financeBalance)}</Text>
             <Text
               style={[
                 styles.revenueHint,
@@ -347,19 +349,19 @@ export default function DashboardScreen() {
 
         <View style={styles.sectionHeader}>
           <View>
-            <Text style={styles.sectionEyebrow}>ANALYTICS</Text>
-            <Text style={styles.sectionTitle}>Pipeline Distribution</Text>
+            <Text style={[styles.sectionEyebrow, { color: palette.textMuted }]}>ANALYTICS</Text>
+            <Text style={[styles.sectionTitle, { color: palette.text }]}>Pipeline Distribution</Text>
           </View>
           <Pressable onPress={() => openRoute("/reports")}>
             <Text style={styles.linkText}>View reports ›</Text>
           </Pressable>
         </View>
 
-        <View style={styles.chartCard}>
+        <View style={[styles.chartCard, { backgroundColor: palette.surface, borderColor: palette.border }]}>
           <View style={styles.chartHeader}>
             <View>
-              <Text style={styles.chartTitle}>CRM Portfolio</Text>
-              <Text style={styles.chartSubtitle}>Current record volume</Text>
+              <Text style={[styles.chartTitle, { color: palette.text }]}>CRM Portfolio</Text>
+              <Text style={[styles.chartSubtitle, { color: palette.textMuted }]}>Current record volume</Text>
             </View>
             <View style={styles.conversionPill}>
               <Text style={styles.conversionValue}>{conversionRate}%</Text>
@@ -373,8 +375,8 @@ export default function DashboardScreen() {
 
               return (
                 <View key={item.label} style={styles.chartColumn}>
-                  <Text style={styles.chartValue}>{item.value}</Text>
-                  <View style={styles.chartTrack}>
+                  <Text style={[styles.chartValue, { color: palette.textSoft }]}>{item.value}</Text>
+                  <View style={[styles.chartTrack, { backgroundColor: palette.surfaceSoft }]}>
                     <View
                       style={[
                         styles.chartBar,
@@ -382,7 +384,7 @@ export default function DashboardScreen() {
                       ]}
                     />
                   </View>
-                  <Text style={styles.chartLabel}>{item.label}</Text>
+                  <Text style={[styles.chartLabel, { color: palette.textMuted }]}>{item.label}</Text>
                 </View>
               );
             })}
@@ -391,27 +393,27 @@ export default function DashboardScreen() {
 
         <View style={styles.sectionHeader}>
           <View>
-            <Text style={styles.sectionEyebrow}>PRIORITY</Text>
-            <Text style={styles.sectionTitle}>Today&apos;s Follow-ups</Text>
+            <Text style={[styles.sectionEyebrow, { color: palette.textMuted }]}>PRIORITY</Text>
+            <Text style={[styles.sectionTitle, { color: palette.text }]}>Today&apos;s Follow-ups</Text>
           </View>
-          <Text style={styles.sectionSubtitle}>Action required</Text>
+          <Text style={[styles.sectionSubtitle, { color: palette.textMuted }]}>Action required</Text>
         </View>
 
         <Pressable
           onPress={() => openRoute("/followups")}
-          style={({ pressed }) => [styles.followupCard, pressed && styles.pressed]}
+          style={({ pressed }) => [styles.followupCard, { backgroundColor: palette.mode === "dark" ? "rgba(245,158,11,0.10)" : "#FFF9EC" }, pressed && styles.pressed]}
         >
           <View style={styles.followupMain}>
             <View style={styles.followupIconBox}>
               <Text style={styles.followupIcon}>✓</Text>
             </View>
             <View style={styles.followupCopy}>
-              <Text style={styles.followupTitle}>
+              <Text style={[styles.followupTitle, { color: palette.text }]}>
                 {data.dueToday > 0
                   ? `${data.dueToday} follow-up${data.dueToday === 1 ? "" : "s"} due today`
                   : "No follow-ups due today"}
               </Text>
-              <Text style={styles.followupSubtitle}>
+              <Text style={[styles.followupSubtitle, { color: palette.textMuted }]}>
                 {data.overdueFollowups > 0
                   ? `${data.overdueFollowups} overdue item${data.overdueFollowups === 1 ? "" : "s"} also need attention`
                   : "Your daily schedule is up to date"}
@@ -441,72 +443,72 @@ export default function DashboardScreen() {
 
         <View style={styles.sectionHeader}>
           <View>
-            <Text style={styles.sectionEyebrow}>SHORTCUTS</Text>
-            <Text style={styles.sectionTitle}>Quick Actions</Text>
+            <Text style={[styles.sectionEyebrow, { color: palette.textMuted }]}>SHORTCUTS</Text>
+            <Text style={[styles.sectionTitle, { color: palette.text }]}>Quick Actions</Text>
           </View>
-          <Text style={styles.sectionSubtitle}>One tap access</Text>
+          <Text style={[styles.sectionSubtitle, { color: palette.textMuted }]}>One tap access</Text>
         </View>
 
         <View style={styles.primaryActionsGrid}>
           <Pressable
             onPress={() => openRoute("/lead-form")}
-            style={({ pressed }) => [styles.primaryAction, pressed && styles.pressed]}
+            style={({ pressed }) => [styles.primaryAction, { backgroundColor: palette.surface, borderColor: palette.border }, pressed && styles.pressed]}
           >
             <View style={[styles.primaryActionIcon, { backgroundColor: "#2563EB" }]}> 
               <Text style={styles.primaryActionIconText}>＋</Text>
             </View>
-            <Text style={styles.primaryActionTitle}>New Lead</Text>
-            <Text style={styles.primaryActionSubtitle}>Create enquiry</Text>
+            <Text style={[styles.primaryActionTitle, { color: palette.text }]}>New Lead</Text>
+            <Text style={[styles.primaryActionSubtitle, { color: palette.textMuted }]}>Create enquiry</Text>
           </Pressable>
 
           <Pressable
             onPress={() => openRoute("/raw-contacts")}
-            style={({ pressed }) => [styles.primaryAction, pressed && styles.pressed]}
+            style={({ pressed }) => [styles.primaryAction, { backgroundColor: palette.surface, borderColor: palette.border }, pressed && styles.pressed]}
           >
             <View style={[styles.primaryActionIcon, { backgroundColor: "#0891B2" }]}> 
               <Text style={styles.primaryActionIconText}>☎</Text>
             </View>
-            <Text style={styles.primaryActionTitle}>Call Queue</Text>
-            <Text style={styles.primaryActionSubtitle}>Raw contacts</Text>
+            <Text style={[styles.primaryActionTitle, { color: palette.text }]}>Call Queue</Text>
+            <Text style={[styles.primaryActionSubtitle, { color: palette.textMuted }]}>Raw contacts</Text>
           </Pressable>
 
           <Pressable
             onPress={() => openRoute("/booking-form")}
-            style={({ pressed }) => [styles.primaryAction, pressed && styles.pressed]}
+            style={({ pressed }) => [styles.primaryAction, { backgroundColor: palette.surface, borderColor: palette.border }, pressed && styles.pressed]}
           >
             <View style={[styles.primaryActionIcon, { backgroundColor: ASSETS_COLOR }]}> 
               <Text style={styles.primaryActionIconText}>▣</Text>
             </View>
-            <Text style={styles.primaryActionTitle}>Booking</Text>
-            <Text style={styles.primaryActionSubtitle}>New property</Text>
+            <Text style={[styles.primaryActionTitle, { color: palette.text }]}>Booking</Text>
+            <Text style={[styles.primaryActionSubtitle, { color: palette.textMuted }]}>New property</Text>
           </Pressable>
 
           <Pressable
             onPress={() => openRoute("/search")}
-            style={({ pressed }) => [styles.primaryAction, pressed && styles.pressed]}
+            style={({ pressed }) => [styles.primaryAction, { backgroundColor: palette.surface, borderColor: palette.border }, pressed && styles.pressed]}
           >
             <View style={[styles.primaryActionIcon, { backgroundColor: "#7C3AED" }]}> 
               <Text style={styles.primaryActionIconText}>⌕</Text>
             </View>
-            <Text style={styles.primaryActionTitle}>Search</Text>
-            <Text style={styles.primaryActionSubtitle}>All records</Text>
+            <Text style={[styles.primaryActionTitle, { color: palette.text }]}>Search</Text>
+            <Text style={[styles.primaryActionSubtitle, { color: palette.textMuted }]}>All records</Text>
           </Pressable>
         </View>
 
         <View style={styles.sectionHeader}>
           <View>
-            <Text style={styles.sectionEyebrow}>WORKSPACE</Text>
-            <Text style={styles.sectionTitle}>Enterprise Tools</Text>
+            <Text style={[styles.sectionEyebrow, { color: palette.textMuted }]}>WORKSPACE</Text>
+            <Text style={[styles.sectionTitle, { color: palette.text }]}>Enterprise Tools</Text>
           </View>
         </View>
         <HomeQuickActions />
 
         <View style={styles.sectionHeader}>
           <View>
-            <Text style={styles.sectionEyebrow}>JMK GROUP</Text>
-            <Text style={styles.sectionTitle}>Business Segments</Text>
+            <Text style={[styles.sectionEyebrow, { color: palette.textMuted }]}>JMK GROUP</Text>
+            <Text style={[styles.sectionTitle, { color: palette.text }]}>Business Segments</Text>
           </View>
-          <Text style={styles.sectionSubtitle}>3 divisions</Text>
+          <Text style={[styles.sectionSubtitle, { color: palette.textMuted }]}>3 divisions</Text>
         </View>
 
         <View style={styles.segmentList}>
@@ -524,37 +526,37 @@ export default function DashboardScreen() {
 
         <View style={styles.sectionHeader}>
           <View>
-            <Text style={styles.sectionEyebrow}>RECENT ACTIVITY</Text>
-            <Text style={styles.sectionTitle}>Live CRM Snapshot</Text>
+            <Text style={[styles.sectionEyebrow, { color: palette.textMuted }]}>RECENT ACTIVITY</Text>
+            <Text style={[styles.sectionTitle, { color: palette.text }]}>Live CRM Snapshot</Text>
           </View>
         </View>
 
-        <View style={styles.activityCard}>
+        <View style={[styles.activityCard, { backgroundColor: palette.surface, borderColor: palette.border }]}>
           <View style={styles.activityItem}>
             <View style={[styles.activityDot, { backgroundColor: "#38BDF8" }]} />
             <View style={styles.activityCopy}>
-              <Text style={styles.activityTitle}>Raw contact pipeline</Text>
-              <Text style={styles.activityText}>
+              <Text style={[styles.activityTitle, { color: palette.text }]}>Raw contact pipeline</Text>
+              <Text style={[styles.activityText, { color: palette.textMuted }]}>
                 {data.interestedRawContacts} interested from {data.rawContacts} total contacts
               </Text>
             </View>
           </View>
-          <View style={styles.activityDivider} />
+          <View style={[styles.activityDivider, { backgroundColor: palette.borderSoft }]} />
           <View style={styles.activityItem}>
             <View style={[styles.activityDot, { backgroundColor: "#60A5FA" }]} />
             <View style={styles.activityCopy}>
-              <Text style={styles.activityTitle}>Lead growth</Text>
-              <Text style={styles.activityText}>
+              <Text style={[styles.activityTitle, { color: palette.text }]}>Lead growth</Text>
+              <Text style={[styles.activityText, { color: palette.textMuted }]}>
                 {data.newLeadsThisMonth} new leads added this month
               </Text>
             </View>
           </View>
-          <View style={styles.activityDivider} />
+          <View style={[styles.activityDivider, { backgroundColor: palette.borderSoft }]} />
           <View style={styles.activityItem}>
             <View style={[styles.activityDot, { backgroundColor: FINANCE_COLOR }]} />
             <View style={styles.activityCopy}>
-              <Text style={styles.activityTitle}>Business collection</Text>
-              <Text style={styles.activityText}>
+              <Text style={[styles.activityTitle, { color: palette.text }]}>Business collection</Text>
+              <Text style={[styles.activityText, { color: palette.textMuted }]}>
                 {formatAmount(data.bookingReceived)} received across active bookings
               </Text>
             </View>
@@ -570,9 +572,9 @@ export default function DashboardScreen() {
         />
 
         <View style={styles.footer}>
-          <Text style={styles.footerBrand}>JMK GROUP</Text>
-          <Text style={styles.footerTagline}>Trust • Growth • Future</Text>
-          <Text style={styles.footerDeveloper}>
+          <Text style={[styles.footerBrand, { color: palette.text }]}>JMK GROUP</Text>
+          <Text style={[styles.footerTagline, { color: palette.textMuted }]}>Trust • Growth • Future</Text>
+          <Text style={[styles.footerDeveloper, { color: palette.textMuted }]}>
             Developed By Suresh Vishwakarma, Founder, JMK Group
           </Text>
         </View>

@@ -17,6 +17,7 @@ import { useRouter } from "expo-router";
 import BrandLogo from "../../components/BrandLogo";
 import { COLORS, RADIUS, SHADOW, SPACING } from "../../constants/theme";
 import { supabase } from "../../services/supabase";
+import { useAppTheme } from "../../context/ThemeContext";
 
 type RecoveryState = "checking" | "ready" | "invalid";
 
@@ -45,6 +46,7 @@ function readRecoveryParameters(url: string) {
 
 export default function ResetPasswordScreen() {
   const router = useRouter();
+  const { palette } = useAppTheme();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -160,7 +162,7 @@ export default function ResetPasswordScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: palette.background }]}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ScrollView
@@ -169,54 +171,57 @@ export default function ResetPasswordScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.logoWrap}>
-          <BrandLogo width={176} showTagline />
+          <BrandLogo width={176} showTagline background={palette.mode === "dark" ? "dark" : "light"} />
         </View>
 
-        <View style={styles.card}>
+        <View style={[styles.card, { backgroundColor: palette.surface, borderColor: palette.border }]}>
           <View style={styles.securityIcon}>
             <Text style={styles.securityIconText}>✓</Text>
           </View>
 
-          <Text style={styles.title}>Create New Password</Text>
-          <Text style={styles.subtitle}>{message}</Text>
+          <Text style={[styles.title, { color: palette.text }]}>Create New Password</Text>
+          <Text style={[styles.subtitle, { color: palette.textMuted }]}>{message}</Text>
 
           {recoveryState === "checking" ? (
             <View style={styles.loadingBox}>
               <ActivityIndicator size="large" color={COLORS.primary} />
-              <Text style={styles.loadingText}>Please wait...</Text>
+              <Text style={[styles.loadingText, { color: palette.textMuted }]}>Please wait...</Text>
             </View>
           ) : null}
 
           {recoveryState === "invalid" ? (
             <View style={styles.invalidBox}>
               <Text style={styles.invalidTitle}>Reset Link Invalid</Text>
-              <Text style={styles.invalidText}>{message}</Text>
+              <Text style={[styles.invalidText, { color: palette.textMuted }]}>{message}</Text>
               <Pressable
                 onPress={() => router.replace("/login")}
                 style={({ pressed }) => [
                   styles.secondaryButton,
+                  { backgroundColor: palette.surfaceSoft, borderColor: palette.border },
                   pressed && styles.pressed,
                 ]}
               >
-                <Text style={styles.secondaryButtonText}>Back to Login</Text>
+                <Text style={[styles.secondaryButtonText, { color: palette.text }]}>Back to Login</Text>
               </Pressable>
             </View>
           ) : null}
 
           {recoveryState === "ready" ? (
             <>
-              <Text style={styles.label}>New Password</Text>
-              <View style={styles.passwordField}>
+              <Text style={[styles.label, { color: palette.text }]}>New Password</Text>
+              <View style={[styles.passwordField, { backgroundColor: palette.surfaceSoft, borderColor: palette.border }]}>
                 <TextInput
                   value={password}
                   onChangeText={setPassword}
                   placeholder="Minimum 8 characters"
-                  placeholderTextColor={COLORS.textMuted}
+                  placeholderTextColor={palette.textMuted}
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
                   autoCorrect={false}
                   textContentType="newPassword"
-                  style={styles.passwordInput}
+                  selectionColor={palette.primary}
+                  cursorColor={palette.primary}
+                  style={[styles.passwordInput, { color: palette.text }]}
                 />
                 <Pressable
                   accessibilityRole="button"
@@ -229,21 +234,23 @@ export default function ResetPasswordScreen() {
                 </Pressable>
               </View>
 
-              <Text style={styles.label}>Confirm Password</Text>
+              <Text style={[styles.label, { color: palette.text }]}>Confirm Password</Text>
               <TextInput
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 placeholder="Password dobara enter karein"
-                placeholderTextColor={COLORS.textMuted}
+                placeholderTextColor={palette.textMuted}
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
                 autoCorrect={false}
                 textContentType="newPassword"
                 onSubmitEditing={() => void handleSavePassword()}
-                style={styles.input}
+                selectionColor={palette.primary}
+                cursorColor={palette.primary}
+                style={[styles.input, { backgroundColor: palette.surfaceSoft, borderColor: palette.border, color: palette.text }]}
               />
 
-              <Text style={styles.passwordHint}>
+              <Text style={[styles.passwordHint, { color: palette.textMuted }]}>
                 Strong password me uppercase, lowercase, number aur special
                 character use karein.
               </Text>

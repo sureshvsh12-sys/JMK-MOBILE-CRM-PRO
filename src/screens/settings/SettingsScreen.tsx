@@ -32,6 +32,7 @@ import {
 } from "../../storage/settingsStorage";
 import type { AppSettings } from "../../storage/settingsStorage";
 import { useAuth } from "../../context/AuthContext";
+import { useAppTheme } from "../../context/ThemeContext";
 import { useSync } from "../../hooks/useSync";
 import { supabase } from "../../services/supabase";
 
@@ -44,6 +45,7 @@ const SEGMENTS: AppSettings["defaultSegment"][] = [
 export default function SettingsScreen() {
   const router = useRouter();
   const { user, signOut } = useAuth();
+  const { themeMode, setThemeMode } = useAppTheme();
 
   const [settings, setSettings] = useState<AppSettings | null>(
     null
@@ -58,8 +60,12 @@ export default function SettingsScreen() {
   const { config: syncConfig, queueCount, syncing, saveConfig: saveSyncConfig, runSync, refresh: refreshSync } = useSync();
 
   const loadSettings = useCallback(async () => {
-    setSettings(await getSettings());
-  }, []);
+    const storedSettings = await getSettings();
+    setSettings({
+      ...storedSettings,
+      darkMode: themeMode === "dark",
+    });
+  }, [themeMode]);
 
   useEffect(() => {
     if (syncConfig) setSyncDraft(syncConfig);
@@ -142,7 +148,10 @@ export default function SettingsScreen() {
     setSaving(true);
 
     try {
-      await saveSettings(normalizedSettings);
+      await Promise.all([
+        saveSettings(normalizedSettings),
+        setThemeMode(normalizedSettings.darkMode ? "dark" : "light"),
+      ]);
       setSettings(normalizedSettings);
       Alert.alert("Saved", "Settings successfully save ho gayi.");
     } catch {
@@ -295,6 +304,17 @@ export default function SettingsScreen() {
     );
   };
 
+  const handleThemeChange = async (darkMode: boolean) => {
+    updateField("darkMode", darkMode);
+
+    try {
+      await setThemeMode(darkMode ? "dark" : "light");
+    } catch {
+      updateField("darkMode", !darkMode);
+      Alert.alert("Theme Failed", "Theme change save nahi ho saka.");
+    }
+  };
+
   const handleLogout = () => {
     Alert.alert(
       "Logout",
@@ -307,12 +327,11 @@ export default function SettingsScreen() {
           onPress: async () => {
             try {
               await signOut();
-              router.replace("/login");
             } catch (error) {
-              Alert.alert(
-                "Logout Failed",
-                error instanceof Error ? error.message : "Logout nahi ho saka."
-              );
+              console.warn("Supabase local logout warning:", error);
+            } finally {
+              router.dismissAll();
+              router.replace("/login");
             }
           },
         },
@@ -490,9 +509,7 @@ export default function SettingsScreen() {
             label="Dark Theme"
             description="Premium JMK dark interface."
             value={settings.darkMode}
-            onValueChange={(value) =>
-              updateField("darkMode", value)
-            }
+            onValueChange={(value) => void handleThemeChange(value)}
           />
         </Section>
 
