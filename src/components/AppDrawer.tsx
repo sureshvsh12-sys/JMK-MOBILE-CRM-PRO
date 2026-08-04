@@ -14,6 +14,7 @@ const ITEMS: readonly DrawerItem[] = [
   { title: "Customers", icon: "♟", route: "/customers", matchPath: "/customers" },
   { title: "Follow-ups", icon: "✓", route: "/followups", matchPath: "/followups" },
   { title: "Bookings", icon: "▣", route: "/bookings", matchPath: "/bookings" },
+  { title: "Properties", icon: "⌂", route: "/properties", matchPath: "/properties" },
   { title: "Finance", icon: "₹", route: "/finance", matchPath: "/finance" },
   { title: "Solar", icon: "☀", route: "/solar", matchPath: "/solar" },
   { title: "Employees", icon: "◉", route: "/employees", matchPath: "/employees" },

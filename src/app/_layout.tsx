@@ -76,6 +76,8 @@ function AppNavigator() {
             <Stack.Screen name="booking-installments" />
             <Stack.Screen name="booking-installment-form" />
 
+            <Stack.Screen name="properties" />
+
             <Stack.Screen name="finance" />
             <Stack.Screen name="finance-entry" />
 
