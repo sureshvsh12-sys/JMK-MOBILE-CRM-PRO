@@ -62,7 +62,7 @@ const BUSINESS_SEGMENTS: readonly BusinessSegment[] = [
     subtitle: "Properties, leads, bookings and registry",
     icon: "⌂",
     accentColor: ASSETS_COLOR,
-    route: "/bookings",
+    route: "/properties",
   },
   {
     title: "JMK Solar Solutions",
