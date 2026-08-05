@@ -27,9 +27,9 @@ export default function LeadListScreen() {
   const stats = useMemo(() => ({ total: leads.length, hot: leads.filter((lead) => lead.temperature === "Hot").length, followups: leads.filter((lead) => Boolean(lead.nextFollowup)).length, value: leads.reduce((sum, lead) => sum + Number(lead.value || 0), 0) }), [leads]);
 
   function updateStage(id: string, currentStage: LeadStage) {
-    const buttons: AlertButton[] = STAGES
+    const buttons = STAGES
       .filter((item): item is LeadStage => item !== "all")
-      .map((nextStage) => ({
+      .map<AlertButton>((nextStage) => ({
         text: nextStage,
         onPress: () => {
           void (async () => {

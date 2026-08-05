@@ -16,9 +16,7 @@ function AppNavigator() {
           <SyncLifecycle />
           <ForegroundNotificationPopup />
 
-          <StatusBar
-            style={resolvedTheme === "dark" ? "light" : "dark"}
-          />
+          <StatusBar style={resolvedTheme === "dark" ? "light" : "dark"} />
 
           <Stack
             screenOptions={{
@@ -77,6 +75,7 @@ function AppNavigator() {
             <Stack.Screen name="booking-installment-form" />
 
             <Stack.Screen name="properties" />
+            <Stack.Screen name="property-details" />
 
             <Stack.Screen name="finance" />
             <Stack.Screen name="finance-entry" />

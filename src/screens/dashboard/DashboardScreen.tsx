@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import {
   Alert,
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -223,6 +224,14 @@ export default function DashboardScreen() {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isLoading}
+            onRefresh={() => void refresh()}
+            tintColor={palette.primary}
+            colors={[palette.primary]}
+          />
+        }
       >
         <View style={styles.heroCard}>
           <View style={styles.heroGlowOne} />
@@ -281,7 +290,7 @@ export default function DashboardScreen() {
             onPress={() => void refresh()}
             style={({ pressed }) => [styles.refreshButton, { backgroundColor: palette.surface, borderColor: palette.border }, pressed && styles.pressed]}
           >
-            <Text style={styles.refreshIcon}>↻</Text>
+            <Text style={styles.refreshIcon}>{isLoading ? "…" : "↻"}</Text>
             <Text style={[styles.refreshText, { color: palette.textSoft }]}>{isLoading ? "Syncing" : "Refresh"}</Text>
           </Pressable>
         </View>

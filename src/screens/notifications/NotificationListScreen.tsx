@@ -23,13 +23,14 @@ import {
   type NotificationModule,
 } from "../../storage/notificationStorage";
 
-const FILTERS: NotificationFilter[] = [
+const FILTERS: readonly NotificationFilter[] = [
   "All",
   "Unread",
   "Follow-ups",
   "Bookings",
   "Finance",
   "Solar",
+  "Raw Contacts",
   "System",
 ];
 
@@ -58,9 +59,7 @@ export default function NotificationListScreen() {
     }, [load])
   );
 
-  const handleOpenNotification = async (
-    notification: AppNotification
-  ) => {
+  const handleOpenNotification = async (notification: AppNotification) => {
     if (!notification.isRead) await markRead(notification.id);
     if (notification.route) router.push(notification.route as never);
   };
@@ -141,7 +140,11 @@ export default function NotificationListScreen() {
           })}
         </View>
 
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+        {error ? (
+          <Pressable style={styles.errorBox} onPress={() => void load(true)}>
+            <Text style={styles.errorText}>{error} Tap to retry.</Text>
+          </Pressable>
+        ) : null}
 
         {loading && notifications.length === 0 ? (
           <View style={styles.emptyContainer}>
@@ -719,6 +722,15 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 12,
     lineHeight: 18,
+  },
+
+  errorBox: {
+    marginTop: SPACING.md,
+    padding: SPACING.md,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.danger,
+    backgroundColor: "#DC262614",
   },
 
   errorText: {

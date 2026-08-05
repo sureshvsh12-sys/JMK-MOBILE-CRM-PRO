@@ -235,7 +235,7 @@ export default function ForegroundNotificationPopup() {
 
 const styles = StyleSheet.create({
   overlay: {
-    ...StyleSheet.absoluteFill,
+    ...StyleSheet.absoluteFillObject,
     zIndex: 9999,
     elevation: 9999,
     paddingHorizontal: 12,

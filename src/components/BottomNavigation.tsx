@@ -66,6 +66,8 @@ const ITEMS: readonly NavigationItem[] = [
     route: "/settings",
     matchPaths: [
       "/settings",
+      "/properties",
+      "/property-details",
       "/bookings",
       "/booking-form",
       "/booking-payments",
@@ -87,7 +89,7 @@ const ITEMS: readonly NavigationItem[] = [
 
 function matchesPath(pathname: string, paths: readonly string[]) {
   return paths.some(
-    (path) => pathname === path || pathname.startsWith(`${path}/`)
+    (path) => pathname === path || pathname.startsWith(`${path}/`),
   );
 }
 
@@ -102,10 +104,12 @@ export default function BottomNavigation({
 
   const resolvedActiveKey =
     activeKey ??
-    ITEMS.find((item) => matchesPath(pathname, item.matchPaths))?.key;
+    ITEMS.find((item) => matchesPath(pathname, item.matchPaths))?.key ??
+    "more";
 
   function handleNavigation(item: NavigationItem) {
     onChange?.(item.key);
+
     if (!matchesPath(pathname, item.matchPaths)) {
       router.replace(item.route);
     }
@@ -238,17 +242,17 @@ const styles = StyleSheet.create({
   title: {
     marginTop: 2,
     fontSize: 9,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   activeIndicator: {
     position: "absolute",
     bottom: 1,
-    width: 18,
+    width: 22,
     height: 3,
-    borderRadius: RADIUS.round,
+    borderRadius: 99,
   },
   pressed: {
     opacity: 0.72,
-    transform: [{ scale: 0.96 }],
+    transform: [{ scale: 0.97 }],
   },
 });

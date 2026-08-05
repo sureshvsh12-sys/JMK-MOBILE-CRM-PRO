@@ -390,6 +390,7 @@ function getModuleIcon(
     Customers: "👥",
     "Follow-ups": "📅",
     Bookings: "🏠",
+    Properties: "🏢",
     Finance: "₹",
     Solar: "☀️",
     System: "⚙️",
